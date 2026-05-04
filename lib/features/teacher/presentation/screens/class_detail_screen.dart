@@ -126,7 +126,10 @@ class _TodoListsTab extends ConsumerWidget {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => TodoListScreen(todoList: lists[i])),
+                        builder: (_) => TodoListScreen(
+                              todoList: lists[i],
+                              classId: classModel.id,
+                            )),
                   ),
                   onDelete: () => _confirmDelete(context, ref, lists[i]),
                 ),
