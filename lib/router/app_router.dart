@@ -99,6 +99,7 @@ GoRouter appRouter(Ref ref) {
             },
           ),
         ],
+        // Desktop shell handles navigation internally; no sub-routes needed
       ),
       GoRoute(
         path: RouteNames.studentHome,

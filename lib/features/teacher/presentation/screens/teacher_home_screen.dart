@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/layout_constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/class_provider.dart';
 import '../../domain/class_model.dart';
+import 'teacher_shell.dart';
 
 class TeacherHomeScreen extends ConsumerWidget {
   const TeacherHomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= LayoutConstants.desktopBreakpoint) {
+          return const TeacherDesktopShell();
+        }
+        return const _TeacherMobileHome();
+      },
+    );
+  }
+}
+
+// ── Mobile layout (unchanged behaviour) ──────────────────────────────────────
+
+class _TeacherMobileHome extends ConsumerWidget {
+  const _TeacherMobileHome();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,11 +56,12 @@ class TeacherHomeScreen extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: classes.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ClassCard(
                     classModel: classes[i],
                     onTap: () => context.push(
-                      '/teacher/class/${classes[i].id}',
+                      '/teacher/home/class/${classes[i].id}',
                       extra: classes[i],
                     ),
                     onDelete: () => _confirmDelete(context, ref, classes[i]),
