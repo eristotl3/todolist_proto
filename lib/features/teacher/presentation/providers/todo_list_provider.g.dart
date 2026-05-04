@@ -6,7 +6,7 @@ part of 'todo_list_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$todoListNotifierHash() => r'c300a60281f416de3faac724321b09f453b63816';
+String _$todoListNotifierHash() => r'ca88b793d3646372fad6df1b113d87211442ea2e';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -170,7 +170,7 @@ class _TodoListNotifierProviderElement
   String get classId => (origin as TodoListNotifierProvider).classId;
 }
 
-String _$todoItemNotifierHash() => r'2e55283dcb730d396f5f1b82b494a7cb70c9d8fd';
+String _$todoItemNotifierHash() => r'1689a4fde9a3f7b1380e723ac2b7981f69ee7a90';
 
 abstract class _$TodoItemNotifier
     extends BuildlessAutoDisposeAsyncNotifier<List<TodoItemModel>> {
