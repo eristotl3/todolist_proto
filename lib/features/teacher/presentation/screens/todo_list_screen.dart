@@ -6,6 +6,8 @@ import '../../domain/todo_item_model.dart';
 import '../providers/todo_list_provider.dart';
 import '../widgets/completion_matrix_widget.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 import 'create_item_screen.dart';
 
 class TodoListScreen extends ConsumerStatefulWidget {
@@ -93,8 +95,13 @@ class _ItemsTab extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return itemsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () =>
+          ShimmerListView(itemBuilder: () => const ShimmerListTile()),
+      error: (e, _) => ErrorRetryWidget(
+        error: e,
+        onRetry: () =>
+            ref.invalidate(todoItemNotifierProvider(todoList.id)),
+      ),
       data: (items) => items.isEmpty
           ? Center(
               child: Padding(

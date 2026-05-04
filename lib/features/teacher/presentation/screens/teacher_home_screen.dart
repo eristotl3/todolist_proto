@@ -6,6 +6,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/class_provider.dart';
 import '../../domain/class_model.dart';
 import 'teacher_shell.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 
 class TeacherHomeScreen extends ConsumerWidget {
   const TeacherHomeScreen({super.key});
@@ -46,8 +48,13 @@ class _TeacherMobileHome extends ConsumerWidget {
         ],
       ),
       body: classesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => ShimmerListView(
+          itemBuilder: () => const ShimmerClassCard(),
+        ),
+        error: (e, _) => ErrorRetryWidget(
+          error: e,
+          onRetry: () => ref.invalidate(classNotifierProvider),
+        ),
         data: (classes) => classes.isEmpty
             ? _EmptyState(name: profile?.fullName ?? '')
             : RefreshIndicator(

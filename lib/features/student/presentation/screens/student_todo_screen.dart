@@ -4,6 +4,8 @@ import '../../domain/student_todo_list_model.dart';
 import '../providers/student_completion_provider.dart';
 import '../widgets/checkable_item_widget.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 
 class StudentTodoScreen extends ConsumerWidget {
   final StudentTodoListModel todoList;
@@ -61,8 +63,13 @@ class StudentTodoScreen extends ConsumerWidget {
             : null,
       ),
       body: itemsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () =>
+            ShimmerListView(itemBuilder: () => const ShimmerListTile()),
+        error: (e, _) => ErrorRetryWidget(
+          error: e,
+          onRetry: () =>
+              ref.invalidate(studentCompletionNotifierProvider(todoList.id)),
+        ),
         data: (items) {
           if (items.isEmpty) {
             return Center(

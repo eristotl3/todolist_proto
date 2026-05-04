@@ -8,6 +8,8 @@ import '../widgets/completion_matrix_widget.dart';
 import '../../../../core/constants/layout_constants.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 import 'create_list_screen.dart';
 import 'create_item_screen.dart';
 
@@ -64,9 +66,13 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
                 ),
                 Expanded(
                   child: classesAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
+                    loading: () => ShimmerListView(
+                      itemBuilder: () => const ShimmerListTile(),
+                    ),
+                    error: (e, _) => ErrorRetryWidget(
+                      error: e,
+                      onRetry: () => ref.invalidate(classNotifierProvider),
+                    ),
                     data: (classes) => classes.isEmpty
                         ? _SidebarEmpty(onCreateClass: () => _createClass(context))
                         : ListView.builder(
@@ -367,8 +373,12 @@ class _ClassPanel extends ConsumerWidget {
           // Lists tab
           listsAsync.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+                ShimmerListView(itemBuilder: () => const ShimmerListTile()),
+            error: (e, _) => ErrorRetryWidget(
+              error: e,
+              onRetry: () =>
+                  ref.invalidate(todoListNotifierProvider(classModel.id)),
+            ),
             data: (lists) => lists.isEmpty
                 ? Center(
                     child: Text('No lists yet — create one!',
@@ -515,8 +525,12 @@ class _ListPanelState extends ConsumerState<_ListPanel>
         children: [
           itemsAsync.when(
             loading: () =>
-                const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+                ShimmerListView(itemBuilder: () => const ShimmerListTile()),
+            error: (e, _) => ErrorRetryWidget(
+              error: e,
+              onRetry: () =>
+                  ref.invalidate(todoItemNotifierProvider(widget.todoList.id)),
+            ),
             data: (items) => items.isEmpty
                 ? const Center(child: Text('No items yet — add one!'))
                 : ListView.builder(

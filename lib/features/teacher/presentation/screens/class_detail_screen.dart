@@ -8,6 +8,8 @@ import '../../domain/todo_list_model.dart';
 import '../../data/class_repository.dart';
 import '../providers/todo_list_provider.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 import 'create_list_screen.dart';
 import 'todo_list_screen.dart';
 
@@ -90,8 +92,11 @@ class _TodoListsTab extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return listsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => ShimmerListView(itemBuilder: () => const ShimmerClassCard()),
+      error: (e, _) => ErrorRetryWidget(
+        error: e,
+        onRetry: () => ref.invalidate(todoListNotifierProvider(classModel.id)),
+      ),
       data: (lists) => lists.isEmpty
           ? Center(
               child: Padding(
@@ -283,8 +288,11 @@ class _StudentsTab extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return studentsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      loading: () => ShimmerListView(itemBuilder: () => const ShimmerListTile()),
+      error: (e, _) => ErrorRetryWidget(
+        error: e,
+        onRetry: () => ref.invalidate(studentsProvider(classId)),
+      ),
       data: (students) => Column(
         children: [
           _JoinCodeBanner(classId: classId),

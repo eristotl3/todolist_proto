@@ -4,6 +4,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/student_todo_list_model.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
+import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../shared/widgets/shimmer_widgets.dart';
 import 'join_class_screen.dart';
 import 'student_todo_screen.dart';
 
@@ -28,8 +30,13 @@ class StudentHomeScreen extends ConsumerWidget {
         ],
       ),
       body: listsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => ShimmerListView(
+          itemBuilder: () => const ShimmerClassCard(),
+        ),
+        error: (e, _) => ErrorRetryWidget(
+          error: e,
+          onRetry: () => ref.invalidate(assignedListsNotifierProvider),
+        ),
         data: (lists) => lists.isEmpty
             ? _EmptyState(name: profile?.fullName ?? '')
             : RefreshIndicator(
