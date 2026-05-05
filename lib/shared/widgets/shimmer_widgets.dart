@@ -36,19 +36,16 @@ class ShimmerClassCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                        width: 140, height: 16, color: base,
-                        decoration:
-                            BoxDecoration(borderRadius: BorderRadius.circular(4))),
+                        width: 140, height: 16,
+                        decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(4))),
                     const SizedBox(height: 8),
                     Container(
-                        width: 100, height: 12, color: base,
-                        decoration:
-                            BoxDecoration(borderRadius: BorderRadius.circular(4))),
+                        width: 100, height: 12,
+                        decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(4))),
                     const SizedBox(height: 8),
                     Container(
-                        width: 80, height: 20, color: base,
-                        decoration:
-                            BoxDecoration(borderRadius: BorderRadius.circular(6))),
+                        width: 80, height: 20,
+                        decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(6))),
                   ],
                 ),
               ),

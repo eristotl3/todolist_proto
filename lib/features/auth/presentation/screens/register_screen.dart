@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/user_profile.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/errors/app_exception.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   final String role;
@@ -45,12 +46,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     ref.listen(authNotifierProvider, (_, next) {
       if (next is AsyncError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error.toString()),
-            backgroundColor: theme.colorScheme.error,
-          ),
-        );
+        final error = next.error;
+        if (error is EmailConfirmationPendingException) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error.message),
+              backgroundColor: Colors.green.shade700,
+              duration: const Duration(seconds: 6),
+            ),
+          );
+          context.go('/login');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error is AppException ? error.message : error.toString()),
+              backgroundColor: theme.colorScheme.error,
+            ),
+          );
+        }
       }
     });
 

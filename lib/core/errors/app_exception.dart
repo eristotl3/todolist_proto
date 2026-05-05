@@ -7,3 +7,10 @@ class AppException implements Exception {
   @override
   String toString() => 'AppException: $message';
 }
+
+class EmailConfirmationPendingException extends AppException {
+  const EmailConfirmationPendingException()
+      : super(
+          'Account created! Check your email and confirm your address before signing in.',
+        );
+}

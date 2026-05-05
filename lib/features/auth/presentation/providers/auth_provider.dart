@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/user_profile.dart';
 
@@ -9,9 +10,14 @@ class AuthNotifier extends _$AuthNotifier {
   @override
   Future<UserProfile?> build() async {
     final repo = ref.watch(authRepositoryProvider);
-    // Listen to Supabase auth state changes and refresh
-    final sub = repo.authStateChanges.listen((_) {
-      ref.invalidateSelf();
+    // Skip initialSession (fires immediately on subscribe) and signedIn
+    // (handled directly by signIn() to avoid a race where build() and signIn()
+    // both fetch the profile concurrently and the later one overwrites the state).
+    final sub = repo.authStateChanges.listen((event) {
+      if (event.event != AuthChangeEvent.initialSession &&
+          event.event != AuthChangeEvent.signedIn) {
+        ref.invalidateSelf();
+      }
     });
     ref.onDispose(sub.cancel);
     return await repo.getCurrentProfile();

@@ -28,6 +28,10 @@ class AuthRepository {
       if (response.user == null) {
         throw const AppException('Sign-up failed: no user returned');
       }
+      // No session means Supabase requires email confirmation before login.
+      if (response.session == null) {
+        throw const EmailConfirmationPendingException();
+      }
       return await _fetchProfile(response.user!.id);
     } on AppException {
       rethrow;
@@ -51,8 +55,12 @@ class AuthRepository {
       return await _fetchProfile(response.user!.id);
     } on AppException {
       rethrow;
+    } on AuthException catch (e) {
+      throw AppException(e.message);
+    } on PostgrestException catch (e) {
+      throw AppException('Database error: ${e.message}');
     } catch (e) {
-      throw AppException('Sign-in failed', cause: e);
+      throw AppException('Sign-in failed: $e');
     }
   }
 
@@ -70,11 +78,33 @@ class AuthRepository {
       _client.auth.onAuthStateChange;
 
   Future<UserProfile> _fetchProfile(String userId) async {
-    final data = await _client
-        .from(AppConstants.profilesTable)
-        .select()
-        .eq('id', userId)
-        .single();
-    return UserProfile.fromJson(data);
+    try {
+      final data = await _client
+          .from(AppConstants.profilesTable)
+          .select()
+          .eq('id', userId)
+          .single();
+      return UserProfile.fromJson(data);
+    } on PostgrestException catch (e) {
+      // PGRST116 = no rows — the trigger didn't create the profile row.
+      // Recreate it from the auth user's metadata so sign-in can succeed.
+      if (e.code == 'PGRST116') {
+        final user = _client.auth.currentUser!;
+        final meta = user.userMetadata ?? {};
+        await _client.from(AppConstants.profilesTable).insert({
+          'id': userId,
+          'email': user.email ?? '',
+          'full_name': meta['full_name'] as String? ?? '',
+          'role': meta['role'] as String? ?? 'student',
+        });
+        final data = await _client
+            .from(AppConstants.profilesTable)
+            .select()
+            .eq('id', userId)
+            .single();
+        return UserProfile.fromJson(data);
+      }
+      rethrow;
+    }
   }
 }

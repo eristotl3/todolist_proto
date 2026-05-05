@@ -37,7 +37,7 @@ void main() {
   /// Subscribes to [studentCompletionNotifierProvider] so auto-dispose
   /// doesn't fire during the test.
   Future<(ProviderContainer, ProviderSubscription<AsyncValue<List<StudentItemState>>>)>
-      _setup(List<StudentItemState> initialItems) async {
+      makeContainer(List<StudentItemState> initialItems) async {
     when(() => mockRepo.getItemsWithCompletion('list-1', 'student-1'))
         .thenAnswer((_) async => initialItems);
 
@@ -71,7 +71,7 @@ void main() {
       when(() => mockRepo.completeItem('item-1', 'student-1'))
           .thenAnswer((_) => completer);
 
-      final (container, sub) = await _setup(initialState);
+      final (container, sub) = await makeContainer(initialState);
       addTearDown(() {
         sub.close();
         container.dispose();
@@ -97,7 +97,7 @@ void main() {
       when(() => mockRepo.completeItem('item-1', 'student-1'))
           .thenThrow(Exception('network error'));
 
-      final (container, sub) = await _setup(initialState);
+      final (container, sub) = await makeContainer(initialState);
       addTearDown(() {
         sub.close();
         container.dispose();
@@ -120,7 +120,7 @@ void main() {
       when(() => mockRepo.uncompleteItem('item-1', 'student-1'))
           .thenAnswer((_) async {});
 
-      final (container, sub) = await _setup(initialState);
+      final (container, sub) = await makeContainer(initialState);
       addTearDown(() {
         sub.close();
         container.dispose();
@@ -140,7 +140,7 @@ void main() {
       when(() => mockRepo.completeItem('item-1', 'student-1'))
           .thenAnswer((_) async {});
 
-      final (container, sub) = await _setup(initialState);
+      final (container, sub) = await makeContainer(initialState);
       addTearDown(() {
         sub.close();
         container.dispose();

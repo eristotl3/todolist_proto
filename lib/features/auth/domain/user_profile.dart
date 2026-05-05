@@ -10,10 +10,10 @@ abstract class UserProfile with _$UserProfile {
   const factory UserProfile({
     required String id,
     required String email,
-    required String fullName,
+    @JsonKey(name: 'full_name') required String fullName,
     required UserRole role,
-    String? avatarUrl,
-    required DateTime createdAt,
+    @JsonKey(name: 'avatar_url') String? avatarUrl,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>

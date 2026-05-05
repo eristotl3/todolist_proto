@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../router/route_names.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -40,9 +41,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen(authNotifierProvider, (_, next) {
       if (next is AsyncError) {
+        final err = next.error;
+        final message = err is AppException ? err.message : err.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.error.toString()),
+            content: Text(message),
             backgroundColor: theme.colorScheme.error,
           ),
         );

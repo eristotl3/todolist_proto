@@ -21,7 +21,7 @@ void main() {
 
   group('NullableDateTimeExtensions', () {
     test('returns formatted date when non-null', () {
-      final DateTime? dt = DateTime(2025, 6, 15);
+      final dt = DateTime(2025, 6, 15);
       expect(dt.toDisplayDate(), 'Jun 15, 2025');
     });
 

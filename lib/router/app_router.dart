@@ -25,15 +25,25 @@ class SplashScreen extends StatelessWidget {
 
 @riverpod
 GoRouter appRouter(Ref ref) {
-  final authState = ref.watch(authNotifierProvider);
-
+  // Do NOT watch authNotifierProvider here — that would recreate the entire
+  // GoRouter (and reset navigation to initialLocation) on every auth state
+  // change. Instead, read auth state inside the redirect callback and let
+  // _AuthStateListenable tell the existing router to re-evaluate redirects.
   return GoRouter(
     initialLocation: RouteNames.splash,
     refreshListenable: _AuthStateListenable(ref),
     redirect: (context, state) {
-      // Still loading — show splash
+      final authState = ref.read(authNotifierProvider);
+
+      // Still loading — show splash only on cold start; if the user is already
+      // on an auth screen (e.g., tapped Sign In), keep them there so the login
+      // screen can show the loading indicator and any error snackbars.
       if (authState is AsyncLoading) {
-        return state.fullPath == RouteNames.splash ? null : RouteNames.splash;
+        final onAuthOrSplash = state.fullPath == RouteNames.splash ||
+            state.fullPath == RouteNames.login ||
+            state.fullPath == RouteNames.register ||
+            state.fullPath == RouteNames.roleSelection;
+        return onAuthOrSplash ? null : RouteNames.splash;
       }
 
       final profile = authState.valueOrNull;

@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:window_manager/window_manager.dart';
 import 'app.dart';
+
+import 'window_setup_stub.dart'
+    if (dart.library.io) 'window_setup_io.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load();
+  // Web bundler skips dotfiles; use a plain-named file on web instead
+  await dotenv.load(fileName: kIsWeb ? 'assets/config.env' : '.env');
 
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
@@ -17,16 +20,7 @@ Future<void> main() async {
 
   if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.macOS ||
       defaultTargetPlatform == TargetPlatform.windows)) {
-    await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
-      minimumSize: Size(800, 600),
-      size: Size(1100, 750),
-      title: 'ClassTask',
-    );
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
+    await setupWindow();
   }
 
   runApp(const ProviderScope(child: App()));

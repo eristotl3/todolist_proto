@@ -9,20 +9,20 @@ part of 'user_profile.dart';
 _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
   id: json['id'] as String,
   email: json['email'] as String,
-  fullName: json['fullName'] as String,
+  fullName: json['full_name'] as String,
   role: $enumDecode(_$UserRoleEnumMap, json['role']),
-  avatarUrl: json['avatarUrl'] as String?,
-  createdAt: DateTime.parse(json['createdAt'] as String),
+  avatarUrl: json['avatar_url'] as String?,
+  createdAt: DateTime.parse(json['created_at'] as String),
 );
 
 Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
     <String, dynamic>{
       'id': instance.id,
       'email': instance.email,
-      'fullName': instance.fullName,
+      'full_name': instance.fullName,
       'role': _$UserRoleEnumMap[instance.role]!,
-      'avatarUrl': instance.avatarUrl,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'avatar_url': instance.avatarUrl,
+      'created_at': instance.createdAt.toIso8601String(),
     };
 
 const _$UserRoleEnumMap = {
