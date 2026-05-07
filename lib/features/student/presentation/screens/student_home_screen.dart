@@ -82,10 +82,10 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
       ],
     ),
   );
-  if (confirmed == true && context.mounted) {
-    await ref.read(authNotifierProvider.notifier).signOut();
-    if (context.mounted) context.go('/role-selection');
-  }
+  if (confirmed != true || !context.mounted) return;
+  final router = GoRouter.of(context);
+  await ref.read(authNotifierProvider.notifier).signOut();
+  router.go('/role-selection');
 }
 
 class _EmptyState extends StatelessWidget {

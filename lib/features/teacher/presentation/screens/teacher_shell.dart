@@ -62,8 +62,9 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
               children: [
                 _SidebarHeader(
                   onSignOut: () async {
+                    final router = GoRouter.of(context);
                     await ref.read(authNotifierProvider.notifier).signOut();
-                    if (context.mounted) context.go('/role-selection');
+                    router.go('/role-selection');
                   },
                   onCreateClass: () => _createClass(context),
                 ),
