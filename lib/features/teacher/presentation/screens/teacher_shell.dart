@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/class_model.dart';
 import '../../domain/todo_list_model.dart';
 import '../providers/class_provider.dart';
@@ -60,8 +61,10 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
             child: Column(
               children: [
                 _SidebarHeader(
-                  onSignOut: () =>
-                      ref.read(authNotifierProvider.notifier).signOut(),
+                  onSignOut: () async {
+                    await ref.read(authNotifierProvider.notifier).signOut();
+                    if (context.mounted) context.go('/role-selection');
+                  },
                   onCreateClass: () => _createClass(context),
                 ),
                 Expanded(
@@ -194,7 +197,7 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
 // ── Sidebar pieces ─────────────────────────────────────────────────────────
 
 class _SidebarHeader extends StatelessWidget {
-  final VoidCallback onSignOut;
+  final Future<void> Function() onSignOut;
   final VoidCallback onCreateClass;
   const _SidebarHeader(
       {required this.onSignOut, required this.onCreateClass});
@@ -244,7 +247,7 @@ class _SidebarHeader extends StatelessWidget {
                   ],
                 ),
               );
-              if (confirmed == true && context.mounted) onSignOut();
+              if (confirmed == true && context.mounted) await onSignOut();
             },
           ),
         ],

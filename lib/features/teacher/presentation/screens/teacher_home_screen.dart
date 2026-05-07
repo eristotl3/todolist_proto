@@ -172,7 +172,8 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     ),
   );
   if (confirmed == true && context.mounted) {
-    ref.read(authNotifierProvider.notifier).signOut();
+    await ref.read(authNotifierProvider.notifier).signOut();
+    if (context.mounted) context.go('/role-selection');
   }
 }
 
