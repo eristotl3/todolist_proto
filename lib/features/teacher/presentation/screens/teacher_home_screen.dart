@@ -171,7 +171,7 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
       ],
     ),
   );
-  if (confirmed == true) {
+  if (confirmed == true && context.mounted) {
     ref.read(authNotifierProvider.notifier).signOut();
   }
 }

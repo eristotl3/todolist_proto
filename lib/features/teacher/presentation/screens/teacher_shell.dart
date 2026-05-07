@@ -244,7 +244,7 @@ class _SidebarHeader extends StatelessWidget {
                   ],
                 ),
               );
-              if (confirmed == true) onSignOut();
+              if (confirmed == true && context.mounted) onSignOut();
             },
           ),
         ],
