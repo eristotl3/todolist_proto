@@ -54,7 +54,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   _RoleCard(
                     icon: Icons.person_rounded,
                     label: 'I am a Student',
-                    description: 'View and complete tasks assigned by your teacher',
+                    description: 'View and complete tasks assigned by your admin',
                     onTap: () => context.push(
                       RouteNames.register,
                       extra: {'role': 'student'},

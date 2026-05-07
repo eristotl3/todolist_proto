@@ -82,7 +82,7 @@ class StudentTodoScreen extends ConsumerWidget {
                   Text('No items yet',
                       style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
-                  Text('Your teacher hasn\'t added any tasks yet.',
+                  Text('Your admin hasn\'t added any tasks yet.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant)),
                 ],

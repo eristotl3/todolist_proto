@@ -77,7 +77,7 @@ class _JoinClassScreenState extends ConsumerState<JoinClassScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Ask your teacher for the class join code.',
+                      'Enter the code your admin gave you.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center,

@@ -104,12 +104,12 @@ class _EmptyState extends StatelessWidget {
             Icon(Icons.school_outlined,
                 size: 72, color: theme.colorScheme.outline),
             const SizedBox(height: 16),
-            Text('Welcome, $name!',
+            Text('Empty class',
                 style: theme.textTheme.titleLarge,
                 textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
-              'Tap "Join Class" and enter the code your teacher gave you.',
+              "Press 'Join Class' to begin",
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
