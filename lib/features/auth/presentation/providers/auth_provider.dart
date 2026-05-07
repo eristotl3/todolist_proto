@@ -50,12 +50,14 @@ class AuthNotifier extends _$AuthNotifier {
   }
 
   Future<void> signOut() async {
+    // Clear local state synchronously first so the router redirect fires
+    // immediately. Doing the Supabase call afterwards keeps the UI snappy
+    // and avoids a race with the signedOut auth-stream event.
+    state = const AsyncData(null);
     try {
       await ref.read(authRepositoryProvider).signOut();
     } catch (_) {
-      // Supabase signOut can fail on network errors; still clear local state
-      // so the router redirects to the login screen.
+      // Network errors are fine — local state is already cleared.
     }
-    state = const AsyncData(null);
   }
 }
