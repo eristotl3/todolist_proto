@@ -73,6 +73,54 @@ class StudentRepository {
     }
   }
 
+  // ── Lists for a single class with progress ────────────────────────────────
+
+  Future<List<StudentTodoListModel>> getListsForClass(
+      String classId, String studentId) async {
+    try {
+      final listData = await _client
+          .from(AppConstants.todoListsTable)
+          .select()
+          .eq('class_id', classId)
+          .order('created_at', ascending: false);
+
+      final lists = (listData as List)
+          .map((e) => StudentTodoListModel.fromJson({
+                ...e,
+                'class_name_label': '',
+              }))
+          .toList();
+
+      final enriched = await Future.wait(lists.map((l) async {
+        final items = await _client
+            .from(AppConstants.todoItemsTable)
+            .select('id')
+            .eq('list_id', l.id);
+        final itemIds =
+            (items as List).map((i) => i['id'] as String).toList();
+
+        int completedCount = 0;
+        if (itemIds.isNotEmpty) {
+          final completions = await _client
+              .from(AppConstants.completionsTable)
+              .select('id')
+              .eq('student_id', studentId)
+              .inFilter('item_id', itemIds);
+          completedCount = (completions as List).length;
+        }
+
+        return l.copyWith(
+          itemCount: itemIds.length,
+          completedCount: completedCount,
+        );
+      }));
+
+      return enriched;
+    } catch (e) {
+      throw AppException('Failed to load class lists', cause: e);
+    }
+  }
+
   // ── Assigned lists with progress ───────────────────────────────────────────
 
   Future<List<StudentTodoListModel>> getAssignedLists(

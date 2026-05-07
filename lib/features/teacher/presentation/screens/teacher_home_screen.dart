@@ -109,10 +109,23 @@ class _TeacherMobileHome extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
+              final name = controller.text.trim();
               Navigator.pop(ctx);
-              await ref
-                  .read(classNotifierProvider.notifier)
-                  .createClass(controller.text.trim());
+              try {
+                await ref
+                    .read(classNotifierProvider.notifier)
+                    .createClass(name);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to create class: $e'),
+                      backgroundColor:
+                          Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Create'),
           ),

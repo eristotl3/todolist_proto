@@ -5,7 +5,8 @@ class AppException implements Exception {
   const AppException(this.message, {this.cause});
 
   @override
-  String toString() => 'AppException: $message';
+  String toString() =>
+      cause != null ? '$message\n($cause)' : message;
 }
 
 class EmailConfirmationPendingException extends AppException {

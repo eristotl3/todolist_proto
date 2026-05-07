@@ -14,7 +14,9 @@ import '../features/teacher/domain/class_model.dart';
 import '../features/teacher/domain/todo_list_model.dart';
 import '../features/student/presentation/screens/student_home_screen.dart';
 import '../features/student/presentation/screens/join_class_screen.dart';
+import '../features/student/presentation/screens/student_class_detail_screen.dart';
 import '../features/student/presentation/screens/student_todo_screen.dart';
+import '../features/student/domain/enrolled_class_model.dart';
 import '../features/student/domain/student_todo_list_model.dart';
 import 'route_names.dart';
 
@@ -135,11 +137,20 @@ GoRouter appRouter(Ref ref) {
             builder: (context, state) => const JoinClassScreen(),
           ),
           GoRoute(
-            path: 'todo/:listId',
+            path: 'class/:classId',
             builder: (context, state) {
-              final todoList = state.extra as StudentTodoListModel;
-              return StudentTodoScreen(todoList: todoList);
+              final classModel = state.extra as EnrolledClassModel;
+              return StudentClassDetailScreen(classModel: classModel);
             },
+            routes: [
+              GoRoute(
+                path: 'todo/:listId',
+                builder: (context, state) {
+                  final todoList = state.extra as StudentTodoListModel;
+                  return StudentTodoScreen(todoList: todoList);
+                },
+              ),
+            ],
           ),
         ],
       ),

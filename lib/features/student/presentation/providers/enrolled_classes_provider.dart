@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/student_repository.dart';
 import '../../domain/enrolled_class_model.dart';
@@ -5,6 +6,15 @@ import '../../domain/student_todo_list_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 part 'enrolled_classes_provider.g.dart';
+
+final studentClassListsProvider = FutureProvider.autoDispose
+    .family<List<StudentTodoListModel>, String>((ref, classId) async {
+  final profile = ref.watch(authNotifierProvider).valueOrNull;
+  if (profile == null) return [];
+  return ref
+      .read(studentRepositoryProvider)
+      .getListsForClass(classId, profile.id);
+});
 
 @riverpod
 class EnrolledClassesNotifier extends _$EnrolledClassesNotifier {
