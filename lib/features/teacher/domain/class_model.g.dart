@@ -10,10 +10,10 @@ _ClassModel _$ClassModelFromJson(Map<String, dynamic> json) => _ClassModel(
   id: json['id'] as String,
   name: json['name'] as String,
   code: json['code'] as String,
-  teacherId: json['teacherId'] as String,
-  createdAt: DateTime.parse(json['createdAt'] as String),
-  studentCount: (json['studentCount'] as num?)?.toInt() ?? 0,
-  listCount: (json['listCount'] as num?)?.toInt() ?? 0,
+  teacherId: json['teacher_id'] as String,
+  createdAt: DateTime.parse(json['created_at'] as String),
+  studentCount: (json['student_count'] as num?)?.toInt() ?? 0,
+  listCount: (json['list_count'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$ClassModelToJson(_ClassModel instance) =>
@@ -21,8 +21,8 @@ Map<String, dynamic> _$ClassModelToJson(_ClassModel instance) =>
       'id': instance.id,
       'name': instance.name,
       'code': instance.code,
-      'teacherId': instance.teacherId,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'studentCount': instance.studentCount,
-      'listCount': instance.listCount,
+      'teacher_id': instance.teacherId,
+      'created_at': instance.createdAt.toIso8601String(),
+      'student_count': instance.studentCount,
+      'list_count': instance.listCount,
     };

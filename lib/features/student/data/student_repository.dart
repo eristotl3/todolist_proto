@@ -23,8 +23,7 @@ class StudentRepository {
       final data = await _client
           .from(AppConstants.enrollmentsTable)
           .select('class_id, classes(id, name, code, teacher_id, created_at)')
-          .eq('student_id', studentId)
-          .order('enrolled_at');
+          .eq('student_id', studentId);
 
       return (data as List).map((e) {
         final classData = e['classes'] as Map<String, dynamic>;

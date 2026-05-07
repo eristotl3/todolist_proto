@@ -11,8 +11,8 @@ _EnrolledClassModel _$EnrolledClassModelFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       name: json['name'] as String,
       code: json['code'] as String,
-      teacherId: json['teacherId'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      teacherId: json['teacher_id'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
     );
 
 Map<String, dynamic> _$EnrolledClassModelToJson(_EnrolledClassModel instance) =>
@@ -20,6 +20,6 @@ Map<String, dynamic> _$EnrolledClassModelToJson(_EnrolledClassModel instance) =>
       'id': instance.id,
       'name': instance.name,
       'code': instance.code,
-      'teacherId': instance.teacherId,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'teacher_id': instance.teacherId,
+      'created_at': instance.createdAt.toIso8601String(),
     };

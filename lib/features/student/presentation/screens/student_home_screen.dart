@@ -24,8 +24,7 @@ class StudentHomeScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sign out',
-            onPressed: () =>
-                ref.read(authNotifierProvider.notifier).signOut(),
+            onPressed: () => _confirmSignOut(context, ref),
           ),
         ],
       ),
@@ -69,6 +68,29 @@ class StudentHomeScreen extends ConsumerWidget {
         label: const Text('Join Class'),
       ),
     );
+  }
+}
+
+Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Sign out?'),
+      content: const Text('Are you sure you want to sign out?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('Sign out'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) {
+    ref.read(authNotifierProvider.notifier).signOut();
   }
 }
 

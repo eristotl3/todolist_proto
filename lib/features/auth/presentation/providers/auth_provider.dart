@@ -50,7 +50,12 @@ class AuthNotifier extends _$AuthNotifier {
   }
 
   Future<void> signOut() async {
-    await ref.read(authRepositoryProvider).signOut();
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+    } catch (_) {
+      // Supabase signOut can fail on network errors; still clear local state
+      // so the router redirects to the login screen.
+    }
     state = const AsyncData(null);
   }
 }
