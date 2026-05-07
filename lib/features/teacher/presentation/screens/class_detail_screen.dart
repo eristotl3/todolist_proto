@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/class_model.dart';
@@ -11,7 +12,6 @@ import '../../../../core/extensions/datetime_extensions.dart';
 import '../../../../shared/widgets/error_retry_widget.dart';
 import '../../../../shared/widgets/shimmer_widgets.dart';
 import 'create_list_screen.dart';
-import 'todo_list_screen.dart';
 
 part 'class_detail_screen.g.dart';
 
@@ -128,13 +128,9 @@ class _TodoListsTab extends ConsumerWidget {
                     const SizedBox(height: 12),
                 itemBuilder: (context, i) => _ListCard(
                   todoList: lists[i],
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => TodoListScreen(
-                              todoList: lists[i],
-                              classId: classModel.id,
-                            )),
+                  onTap: () => context.push(
+                    '/teacher/home/class/${classModel.id}/list/${lists[i].id}',
+                    extra: lists[i],
                   ),
                   onDelete: () => _confirmDelete(context, ref, lists[i]),
                 ),

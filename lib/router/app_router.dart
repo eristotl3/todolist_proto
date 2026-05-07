@@ -9,9 +9,13 @@ import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/role_selection_screen.dart';
 import '../features/teacher/presentation/screens/teacher_home_screen.dart';
 import '../features/teacher/presentation/screens/class_detail_screen.dart';
+import '../features/teacher/presentation/screens/todo_list_screen.dart';
 import '../features/teacher/domain/class_model.dart';
+import '../features/teacher/domain/todo_list_model.dart';
 import '../features/student/presentation/screens/student_home_screen.dart';
 import '../features/student/presentation/screens/join_class_screen.dart';
+import '../features/student/presentation/screens/student_todo_screen.dart';
+import '../features/student/domain/student_todo_list_model.dart';
 import 'route_names.dart';
 
 part 'app_router.g.dart';
@@ -107,9 +111,20 @@ GoRouter appRouter(Ref ref) {
               final classModel = state.extra as ClassModel;
               return ClassDetailScreen(classModel: classModel);
             },
+            routes: [
+              GoRoute(
+                path: 'list/:listId',
+                builder: (context, state) {
+                  final todoList = state.extra as TodoListModel;
+                  return TodoListScreen(
+                    todoList: todoList,
+                    classId: state.pathParameters['classId']!,
+                  );
+                },
+              ),
+            ],
           ),
         ],
-        // Desktop shell handles navigation internally; no sub-routes needed
       ),
       GoRoute(
         path: RouteNames.studentHome,
@@ -118,6 +133,13 @@ GoRouter appRouter(Ref ref) {
           GoRoute(
             path: 'join-class',
             builder: (context, state) => const JoinClassScreen(),
+          ),
+          GoRoute(
+            path: 'todo/:listId',
+            builder: (context, state) {
+              final todoList = state.extra as StudentTodoListModel;
+              return StudentTodoScreen(todoList: todoList);
+            },
           ),
         ],
       ),

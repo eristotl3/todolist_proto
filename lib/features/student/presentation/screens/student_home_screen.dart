@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/student_todo_list_model.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
 import '../../../../shared/widgets/error_retry_widget.dart';
 import '../../../../shared/widgets/shimmer_widgets.dart';
-import 'join_class_screen.dart';
-import 'student_todo_screen.dart';
 
 class StudentHomeScreen extends ConsumerWidget {
   const StudentHomeScreen({super.key});
@@ -48,22 +47,16 @@ class StudentHomeScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                   itemBuilder: (context, i) => _AssignedListCard(
                     todoList: lists[i],
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            StudentTodoScreen(todoList: lists[i]),
-                      ),
+                    onTap: () => context.push(
+                      '/student/home/todo/${lists[i].id}',
+                      extra: lists[i],
                     ),
                   ),
                 ),
               ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const JoinClassScreen()),
-        ),
+        onPressed: () => context.push('/student/home/join-class'),
         icon: const Icon(Icons.add),
         label: const Text('Join Class'),
       ),
