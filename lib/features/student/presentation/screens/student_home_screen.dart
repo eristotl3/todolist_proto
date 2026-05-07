@@ -5,7 +5,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/student_todo_list_model.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
-import '../../../../shared/widgets/error_retry_widget.dart';
 import '../../../../shared/widgets/shimmer_widgets.dart';
 
 class StudentHomeScreen extends ConsumerWidget {
@@ -31,10 +30,7 @@ class StudentHomeScreen extends ConsumerWidget {
         loading: () => ShimmerListView(
           itemBuilder: () => const ShimmerClassCard(),
         ),
-        error: (e, _) => ErrorRetryWidget(
-          error: e,
-          onRetry: () => ref.invalidate(assignedListsNotifierProvider),
-        ),
+        error: (e, _) => _EmptyState(name: profile?.fullName ?? ''),
         data: (lists) => lists.isEmpty
             ? _EmptyState(name: profile?.fullName ?? '')
             : RefreshIndicator(
