@@ -122,6 +122,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
                     ),
+                    if (!isTeacher) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your admin can see this',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
@@ -138,6 +147,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         return null;
                       },
                     ),
+                    if (!isTeacher) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your admin can see this',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
