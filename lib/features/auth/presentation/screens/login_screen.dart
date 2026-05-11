@@ -52,139 +52,141 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const AppLogo(),
-                    const SizedBox(height: 48),
-                    const Text(
-                      'Welcome back',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.text,
-                        letterSpacing: -0.4,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppLogo(),
+                const SizedBox(height: 36),
+                const Text(
+                  'Welcome back',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.text,
+                    letterSpacing: -0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Sign in to your ClassTask account.',
+                  style: TextStyle(fontSize: 15, color: AppTheme.textMute),
+                ),
+                const SizedBox(height: 28),
+                _FieldLabel('Email'),
+                const SizedBox(height: 7),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    hintText: 'you@example.com',
+                    prefixIcon: Icon(Icons.mail_outline_rounded,
+                        size: 18, color: AppTheme.textFaint),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Enter your email' : null,
+                ),
+                const SizedBox(height: 14),
+                _FieldLabel('Password'),
+                const SizedBox(height: 7),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    hintText: '••••••••',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded,
+                        size: 18, color: AppTheme.textFaint),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        size: 18,
+                        color: AppTheme.textFaint,
                       ),
-                      textAlign: TextAlign.center,
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Sign in to your account',
-                      style: TextStyle(fontSize: 13, color: AppTheme.textMute),
-                      textAlign: TextAlign.center,
+                  ),
+                  obscureText: _obscurePassword,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Enter your password' : null,
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.danger.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: AppTheme.danger.withValues(alpha: 0.25)),
                     ),
-                    const SizedBox(height: 32),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Enter your email' : null,
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_rounded
-                                : Icons.visibility_rounded,
-                            size: 20,
-                            color: AppTheme.textFaint,
-                          ),
-                          onPressed: () =>
-                              setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                      ),
-                      obscureText: _obscurePassword,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Enter your password' : null,
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppTheme.danger.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppTheme.danger.withValues(alpha: 0.25),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline_rounded,
-                                color: AppTheme.danger, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _errorMessage!,
-                                style: const TextStyle(
-                                  color: AppTheme.danger,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: isLoading ? null : _submit,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.accentInk,
-                              ),
-                            )
-                          : const Text('Sign In'),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Row(
                       children: [
-                        const Text(
-                          "Don't have an account? ",
-                          style: TextStyle(color: AppTheme.textMute, fontSize: 13),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.push(RouteNames.roleSelection),
-                          child: const Text(
-                            'Sign up',
-                            style: TextStyle(
-                              color: AppTheme.accent,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                        const Icon(Icons.error_outline_rounded,
+                            color: AppTheme.danger, size: 15),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: AppTheme.danger,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: isLoading ? null : _submit,
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppTheme.accentInk),
+                        )
+                      : const Text('Sign in'),
                 ),
-              ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: () => context.push(RouteNames.useCaseSelection),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: const Text('Create an account'),
+                ),
+              ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.textMute,
+        letterSpacing: 0.05,
       ),
     );
   }

@@ -40,89 +40,83 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
     final tasksAsync = ref.watch(personalTaskNotifierProvider);
     final firstName = profile?.fullName.split(' ').first ?? 'there';
 
+    void signOut() => _confirmSignOut(context, ref);
+
     return Scaffold(
       body: tasksAsync.when(
-        loading: () => SafeArea(
-          child: ShimmerListView(itemBuilder: () => const ShimmerClassCard()),
-        ),
-        error: (e, _) => SafeArea(child: _EmptyBody(firstName: firstName)),
+        loading: () => _buildShell(firstName, 0, 0, signOut,
+            child: const ShimmerListView(
+                itemBuilder: _shimmerCard)),
+        error: (e, _) => _buildShell(firstName, 0, 0, signOut,
+            child: const _EmptyTasksPlaceholder()),
         data: (tasks) {
           final done = tasks.where((t) => t.isCompleted).length;
           final total = tasks.length;
 
           if (tasks.isEmpty) {
-            return SafeArea(child: _EmptyBody(firstName: firstName));
+            return _buildShell(firstName, 0, 0, signOut,
+                child: const _EmptyTasksPlaceholder());
           }
 
           final sections = _buildSections(tasks);
           final hintCount = _showSwipeHint ? 1 : 0;
           final itemCount = hintCount +
               sections.fold<int>(
-                  0, (s, e) => s + e.items.length + (e.name != null ? 1 : 0));
+                  0,
+                  (s, e) =>
+                      s + e.items.length + (e.name != null ? 1 : 0));
 
-          return RefreshIndicator(
-            color: AppTheme.accent,
-            onRefresh: () =>
-                ref.read(personalTaskNotifierProvider.notifier).refresh(),
-            child: CustomScrollView(
-              slivers: [
-                // ── Hero header ──────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: _HeroHeader(
-                    firstName: firstName,
-                    done: done,
-                    total: total,
-                    onSignOut: () => _confirmSignOut(context, ref),
-                  ),
-                ),
-                // ── Task list ─────────────────────────────────────────
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (ctx, rawIndex) {
-                        var idx = rawIndex;
+          return _buildShell(
+            firstName,
+            done,
+            total,
+            signOut,
+            child: RefreshIndicator(
+              color: AppTheme.accent,
+              onRefresh: () =>
+                  ref.read(personalTaskNotifierProvider.notifier).refresh(),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                itemCount: itemCount,
+                itemBuilder: (ctx, rawIndex) {
+                  var idx = rawIndex;
 
-                        if (_showSwipeHint) {
-                          if (idx == 0) {
-                            return _SwipeHintBanner(
-                              onDismiss: () =>
-                                  setState(() => _showSwipeHint = false),
-                            );
-                          }
-                          idx--;
-                        }
+                  if (_showSwipeHint) {
+                    if (idx == 0) {
+                      return _SwipeHintBanner(
+                        onDismiss: () =>
+                            setState(() => _showSwipeHint = false),
+                      );
+                    }
+                    idx--;
+                  }
 
-                        for (final section in sections) {
-                          final headerCount = section.name != null ? 1 : 0;
-                          final total2 = headerCount + section.items.length;
-                          if (idx < total2) {
-                            if (section.name != null && idx == 0) {
-                              return _GroupHeader(name: section.name!);
-                            }
-                            final task = section.items[idx - headerCount];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _TaskCard(
-                                task: task,
-                                onToggle: () => ref
-                                    .read(personalTaskNotifierProvider.notifier)
-                                    .toggleTask(task.id),
-                                onDelete: () => ref
-                                    .read(personalTaskNotifierProvider.notifier)
-                                    .deleteTask(task.id),
-                              ),
-                            );
-                          }
-                          idx -= total2;
-                        }
-                        return const SizedBox.shrink();
-                      },
-                      childCount: itemCount,
-                    ),
-                  ),
-                ),
-              ],
+                  for (final section in sections) {
+                    final headerCount = section.name != null ? 1 : 0;
+                    final total2 = headerCount + section.items.length;
+                    if (idx < total2) {
+                      if (section.name != null && idx == 0) {
+                        return _GroupHeader(name: section.name!);
+                      }
+                      final task = section.items[idx - headerCount];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 9),
+                        child: _TaskCard(
+                          task: task,
+                          onToggle: () => ref
+                              .read(personalTaskNotifierProvider.notifier)
+                              .toggleTask(task.id),
+                          onDelete: () => ref
+                              .read(personalTaskNotifierProvider.notifier)
+                              .deleteTask(task.id),
+                        ),
+                      );
+                    }
+                    idx -= total2;
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             ),
           );
         },
@@ -140,8 +134,89 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
           _showAddDialog(context, ref, existingGroups);
         },
         icon: const Icon(Icons.add, size: 20),
-        label: const Text('Add Task'),
+        label: const Text('New task'),
       ),
+    );
+  }
+
+  // Builds the full-page scaffold: top header + progress hero + scrollable child
+  Widget _buildShell(
+    String firstName,
+    int done,
+    int total,
+    VoidCallback onSignOut, {
+    required Widget child,
+  }) {
+    final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
+    final pct = total == 0 ? 0.0 : done / total;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ── Top header (warm bg) ─────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              22,
+              MediaQuery.of(context).padding.top + 20,
+              22,
+              0,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        today,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textMute,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hi, $firstName.',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.text,
+                          letterSpacing: -0.7,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _IconButton(
+                  icon: Icons.logout_rounded,
+                  onTap: onSignOut,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Progress hero card (terracotta) ──────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 18, 22, 4),
+            child: _ProgressHeroCard(done: done, total: total, pct: pct),
+          ),
+        ),
+
+        // ── Task list ────────────────────────────────────────────
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
+          sliver: SliverFillRemaining(
+            hasScrollBody: true,
+            child: child,
+          ),
+        ),
+      ],
     );
   }
 
@@ -167,76 +242,161 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
   }
 }
 
+Widget _shimmerCard() => const ShimmerClassCard();
+
 class _Section {
   final String? name;
   final List<PersonalTaskModel> items;
   const _Section({required this.name, required this.items});
 }
 
-// ── Hero header ──────────────────────────────────────────────────────────────
+// ── Small icon button (surface bg) ───────────────────────────────────────────
 
-class _HeroHeader extends StatelessWidget {
-  final String firstName;
-  final int done;
-  final int total;
-  final VoidCallback onSignOut;
+class _IconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
 
-  const _HeroHeader({
-    required this.firstName,
-    required this.done,
-    required this.total,
-    required this.onSignOut,
-  });
+  const _IconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final allDone = total > 0 && done == total;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.line),
+        ),
+        child: Icon(icon, size: 17, color: AppTheme.textMute),
+      ),
+    );
+  }
+}
+
+// ── Progress hero card ────────────────────────────────────────────────────────
+
+class _ProgressHeroCard extends StatelessWidget {
+  final int done;
+  final int total;
+  final double pct;
+
+  const _ProgressHeroCard(
+      {required this.done, required this.total, required this.pct});
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = total == 0
+        ? 'Nothing planned yet'
+        : done == total
+            ? "You're all done — nice."
+            : '${total - done} left to go';
+
     return Container(
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
         color: AppTheme.accent,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accent.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        MediaQuery.of(context).padding.top + 16,
-        24,
-        28,
-      ),
-      child: Row(
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi, $firstName 👋',
-                  style: const TextStyle(
-                    color: AppTheme.accentInk,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  allDone
-                      ? 'All done! Great work today.'
-                      : '$done of $total tasks complete',
-                  style: TextStyle(
-                    color: AppTheme.accentInk.withValues(alpha: 0.75),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+          // Decorative circles
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
           ),
-          _CompletionRing(done: done, total: total),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded,
-                color: AppTheme.accentInk, size: 20),
-            tooltip: 'Sign out',
-            onPressed: onSignOut,
+          Positioned(
+            right: -60,
+            bottom: -50,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          // Content
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "TODAY'S PROGRESS",
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.accentInk,
+                        letterSpacing: 0.1,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$done',
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentInk,
+                              letterSpacing: -1.2,
+                              height: 1,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' / $total',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentInk
+                                  .withValues(alpha: 0.5),
+                              letterSpacing: -0.5,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.accentInk.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _ProgressRing(pct: pct),
+            ],
           ),
         ],
       ),
@@ -244,66 +404,98 @@ class _HeroHeader extends StatelessWidget {
   }
 }
 
-class _CompletionRing extends StatelessWidget {
-  final int done;
-  final int total;
-
-  const _CompletionRing({required this.done, required this.total});
+class _ProgressRing extends StatelessWidget {
+  final double pct;
+  const _ProgressRing({required this.pct});
 
   @override
   Widget build(BuildContext context) {
-    final progress = total == 0 ? 0.0 : done / total;
+    const size = 64.0;
     return SizedBox(
-      width: 60,
-      height: 60,
+      width: size,
+      height: size,
       child: CustomPaint(
-        painter: _RingPainter(progress: progress),
-        child: Center(
-          child: Text(
-            total == 0 ? '–' : '$done',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.accentInk,
-            ),
-          ),
-        ),
+        painter: _RingPainter(pct: pct),
       ),
     );
   }
 }
 
 class _RingPainter extends CustomPainter {
-  final double progress;
-  const _RingPainter({required this.progress});
+  final double pct;
+  const _RingPainter({required this.pct});
 
   @override
   void paint(Canvas canvas, Size size) {
+    const stroke = 6.0;
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 8) / 2;
-    final trackPaint = Paint()
-      ..color = AppTheme.accentInk.withValues(alpha: 0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.5;
-    canvas.drawCircle(center, radius, trackPaint);
-    if (progress > 0) {
-      final arcPaint = Paint()
-        ..color = AppTheme.accentInk
+    final r = (size.width - stroke) / 2;
+
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.18)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4.5
-        ..strokeCap = StrokeCap.round;
+        ..strokeWidth = stroke,
+    );
+    if (pct > 0) {
       canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
+        Rect.fromCircle(center: center, radius: r),
         -math.pi / 2,
-        2 * math.pi * progress,
+        2 * math.pi * pct,
         false,
-        arcPaint,
+        Paint()
+          ..color = AppTheme.accentInk
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke
+          ..strokeCap = StrokeCap.round,
       );
     }
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) => old.progress != progress;
+  bool shouldRepaint(_RingPainter old) => old.pct != pct;
+}
+
+// ── Empty placeholder ────────────────────────────────────────────────────────
+
+class _EmptyTasksPlaceholder extends StatelessWidget {
+  const _EmptyTasksPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppTheme.surface2,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.auto_awesome_rounded,
+                size: 26, color: AppTheme.textMute),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'No tasks yet',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.text),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Tap New task to add your first.',
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textMute),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Add task dialog ──────────────────────────────────────────────────────────
@@ -339,12 +531,8 @@ class _TaskInput {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? groupName;
-  const _TaskInput({
-    required this.title,
-    this.startDate,
-    this.endDate,
-    this.groupName,
-  });
+  const _TaskInput(
+      {required this.title, this.startDate, this.endDate, this.groupName});
 }
 
 class _AddTaskDialog extends StatefulWidget {
@@ -377,7 +565,9 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
       helpText: 'Select date or range',
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: Theme.of(ctx).colorScheme.copyWith(primary: AppTheme.accent),
+          colorScheme: Theme.of(ctx)
+              .colorScheme
+              .copyWith(primary: AppTheme.accent),
         ),
         child: child!,
       ),
@@ -402,7 +592,7 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('New Task'),
+      title: const Text('New task'),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -414,54 +604,67 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
                 controller: _titleController,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  labelText: 'Task name',
-                  hintText: 'e.g. Buy groceries',
-                  prefixIcon: Icon(Icons.check_circle_outline_rounded, size: 20),
+                  labelText: 'Task',
+                  hintText: 'e.g. Email Prof. Lin',
+                  prefixIcon: Icon(Icons.check_circle_outline_rounded,
+                      size: 18, color: AppTheme.textFaint),
                 ),
                 textCapitalization: TextCapitalization.sentences,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a task name' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Enter a task name'
+                    : null,
                 onFieldSubmitted: (_) => _submit(),
               ),
               const SizedBox(height: 12),
               if (_range == null)
                 OutlinedButton.icon(
-                  icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                  label: const Text('Add date (optional)'),
+                  icon: const Icon(Icons.calendar_today_outlined, size: 15),
+                  label: const Text('Add date  (optional)'),
                   onPressed: _pickDate,
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 44),
+                    minimumSize: const Size(double.infinity, 46),
+                    side: const BorderSide(
+                        color: AppTheme.line, style: BorderStyle.none),
+                    foregroundColor: AppTheme.textMute,
+                    backgroundColor: AppTheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                          color: AppTheme.line,
+                          style: BorderStyle.solid,
+                          width: 1),
+                    ),
                   ),
                 )
               else
-                InkWell(
+                GestureDetector(
                   onTap: _pickDate,
-                  borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
-                      border:
-                          Border.all(color: AppTheme.accent.withValues(alpha: 0.6)),
-                      borderRadius: BorderRadius.circular(10),
-                      color: AppTheme.accentSoft,
+                      color: AppTheme.accentMute,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.accent),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.calendar_today_outlined,
-                            size: 16, color: AppTheme.accent),
+                            size: 15, color: AppTheme.accent),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _formatDateRange(_range!.start, _range!.end),
                             style: const TextStyle(
-                                color: AppTheme.accent, fontSize: 13),
+                                color: AppTheme.accent,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600),
                           ),
                         ),
                         GestureDetector(
                           onTap: () => setState(() => _range = null),
                           child: const Icon(Icons.close,
-                              size: 16, color: AppTheme.textFaint),
+                              size: 15, color: AppTheme.accent),
                         ),
                       ],
                     ),
@@ -471,9 +674,10 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
               TextFormField(
                 controller: _groupController,
                 decoration: const InputDecoration(
-                  labelText: 'Group (optional)',
-                  hintText: 'e.g. Groceries',
-                  prefixIcon: Icon(Icons.folder_outlined, size: 20),
+                  labelText: 'Group',
+                  hintText: 'optional',
+                  prefixIcon: Icon(Icons.folder_outlined,
+                      size: 18, color: AppTheme.textFaint),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
@@ -486,8 +690,8 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
                       .map((g) => ActionChip(
                             label: Text(g),
                             visualDensity: VisualDensity.compact,
-                            onPressed: () =>
-                                setState(() => _groupController.text = g),
+                            onPressed: () => setState(
+                                () => _groupController.text = g),
                           ))
                       .toList(),
                 ),
@@ -504,8 +708,7 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
         FilledButton(
           onPressed: _submit,
           style: FilledButton.styleFrom(
-            minimumSize: const Size(80, 40),
-          ),
+              minimumSize: const Size(80, 40)),
           child: const Text('Add'),
         ),
       ],
@@ -513,7 +716,7 @@ class _AddTaskDialogState extends State<_AddTaskDialog> {
   }
 }
 
-// ── Sign-out ─────────────────────────────────────────────────────────────────
+// ── Sign-out ──────────────────────────────────────────────────────────────────
 
 Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   final confirmed = await showDialog<bool>(
@@ -528,6 +731,7 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
+          style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
           child: const Text('Sign out'),
         ),
       ],
@@ -548,7 +752,7 @@ class _SwipeHintBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.accentSoft,
@@ -558,11 +762,11 @@ class _SwipeHintBanner extends StatelessWidget {
       child: Row(
         children: [
           const Icon(Icons.swipe_left_alt_rounded,
-              size: 16, color: AppTheme.accent),
+              size: 15, color: AppTheme.accent),
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
-              'Swipe left on a task to reveal the delete button',
+              'Swipe left on a task to delete it',
               style: TextStyle(
                   color: AppTheme.accent,
                   fontSize: 12,
@@ -571,8 +775,7 @@ class _SwipeHintBanner extends StatelessWidget {
           ),
           GestureDetector(
             onTap: onDismiss,
-            child:
-                const Icon(Icons.close, size: 14, color: AppTheme.textFaint),
+            child: const Icon(Icons.close, size: 14, color: AppTheme.textFaint),
           ),
         ],
       ),
@@ -589,102 +792,22 @@ class _GroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: 10),
       child: Row(
         children: [
-          const Icon(Icons.folder_rounded, size: 14, color: AppTheme.accent),
-          const SizedBox(width: 6),
           Text(
             name.toUpperCase(),
             style: const TextStyle(
-              color: AppTheme.accent,
-              fontWeight: FontWeight.w700,
-              fontSize: 10,
-              letterSpacing: 0.8,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textMute,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(width: 8),
           const Expanded(child: Divider(color: AppTheme.lineSoft)),
         ],
       ),
-    );
-  }
-}
-
-// ── Empty body ───────────────────────────────────────────────────────────────
-
-class _EmptyBody extends StatelessWidget {
-  final String firstName;
-  const _EmptyBody({required this.firstName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Minimal hero header (no stats)
-        Container(
-          decoration: const BoxDecoration(
-            color: AppTheme.accent,
-            borderRadius:
-                BorderRadius.vertical(bottom: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            24,
-            MediaQuery.of(context).padding.top + 16,
-            24,
-            28,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Hi, $firstName 👋',
-                  style: const TextStyle(
-                    color: AppTheme.accentInk,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout_rounded,
-                    color: AppTheme.accentInk, size: 20),
-                tooltip: 'Sign out',
-                onPressed: () {
-                  // handled by parent consumer
-                },
-              ),
-            ],
-          ),
-        ),
-        const Expanded(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.checklist_rounded,
-                      size: 64, color: AppTheme.line),
-                  SizedBox(height: 16),
-                  Text('No tasks yet',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.text)),
-                  SizedBox(height: 8),
-                  Text(
-                    "Tap 'Add Task' to get started.",
-                    style: TextStyle(color: AppTheme.textMute, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -696,11 +819,8 @@ class _TaskCard extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onDelete;
 
-  const _TaskCard({
-    required this.task,
-    required this.onToggle,
-    required this.onDelete,
-  });
+  const _TaskCard(
+      {required this.task, required this.onToggle, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -710,7 +830,7 @@ class _TaskCard extends StatelessWidget {
       key: ValueKey(task.id),
       endActionPane: ActionPane(
         motion: const DrawerMotion(),
-        extentRatio: 0.28,
+        extentRatio: 0.25,
         children: [
           SlidableAction(
             onPressed: (_) => onDelete(),
@@ -719,99 +839,109 @@ class _TaskCard extends StatelessWidget {
             icon: Icons.delete_rounded,
             label: 'Delete',
             borderRadius:
-                const BorderRadius.horizontal(right: Radius.circular(16)),
+                const BorderRadius.horizontal(right: Radius.circular(18)),
           ),
         ],
       ),
-      child: Material(
-        color: task.isCompleted ? AppTheme.surface2 : AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onToggle,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: task.isCompleted
-                    ? AppTheme.lineSoft
-                    : AppTheme.line,
-              ),
+      child: GestureDetector(
+        onTap: onToggle,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 15, 12, 15),
+          decoration: BoxDecoration(
+            color: task.isCompleted ? AppTheme.surface2 : AppTheme.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: task.isCompleted ? AppTheme.lineSoft : AppTheme.line,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Checkbox
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: task.isCompleted ? AppTheme.accent : Colors.transparent,
-                    border: Border.all(
-                      color: task.isCompleted
-                          ? AppTheme.accent
-                          : AppTheme.line,
-                      width: 1.8,
+            boxShadow: task.isCompleted
+                ? null
+                : [
+                    BoxShadow(
+                      color: const Color(0x0A321E00),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
-                    borderRadius: BorderRadius.circular(6),
+                  ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Checkbox
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color:
+                      task.isCompleted ? AppTheme.accent : Colors.transparent,
+                  border: Border.all(
+                    color: task.isCompleted ? AppTheme.accent : AppTheme.line,
+                    width: 1.7,
                   ),
-                  child: task.isCompleted
-                      ? const Icon(Icons.check_rounded,
-                          size: 14, color: AppTheme.accentInk)
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: task.isCompleted
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.accent.withValues(alpha: 0.3),
+                            blurRadius: 0,
+                            spreadRadius: 3,
+                          ),
+                        ]
                       : null,
                 ),
-                const SizedBox(width: 12),
-                // Title + date
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: task.isCompleted
-                              ? AppTheme.textFaint
-                              : AppTheme.text,
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                          decorationColor: AppTheme.textFaint,
-                        ),
+                child: task.isCompleted
+                    ? const Icon(Icons.check_rounded,
+                        size: 13, color: AppTheme.accentInk)
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.15,
+                        color: task.isCompleted
+                            ? AppTheme.textFaint
+                            : AppTheme.text,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                        decorationColor: AppTheme.textFaint,
                       ),
-                      if (dateLabel.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_outlined,
-                                size: 11, color: AppTheme.textFaint),
-                            const SizedBox(width: 4),
-                            Text(
-                              dateLabel,
-                              style: const TextStyle(
-                                  fontSize: 11, color: AppTheme.textFaint),
-                            ),
-                          ],
-                        ),
-                      ],
+                    ),
+                    if (dateLabel.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined,
+                              size: 11, color: AppTheme.textFaint),
+                          const SizedBox(width: 4),
+                          Text(
+                            dateLabel,
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textFaint),
+                          ),
+                        ],
+                      ),
                     ],
-                  ),
+                  ],
                 ),
-                // Inline delete
-                IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded,
-                      size: 18, color: AppTheme.textFaint),
-                  onPressed: onDelete,
-                  tooltip: 'Delete',
-                  padding: EdgeInsets.zero,
-                  constraints:
-                      const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+              // Inline delete
+              GestureDetector(
+                onTap: onDelete,
+                child: const Padding(
+                  padding: EdgeInsets.all(6),
+                  child: Icon(Icons.close,
+                      size: 15, color: AppTheme.textFaint),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

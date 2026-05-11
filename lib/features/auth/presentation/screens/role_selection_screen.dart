@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../router/route_names.dart';
 import '../../../../theme/app_theme.dart';
-import 'use_case_selection_screen.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -10,78 +9,61 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => context.pop(),
-        ),
-      ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const AppLogo(),
-                  const SizedBox(height: 48),
-                  const Text(
-                    'I am a...',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textMute,
-                      letterSpacing: 0.5,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () => context.pop(),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.chevron_left_rounded,
+                        color: AppTheme.textMute, size: 20),
+                    SizedBox(width: 2),
+                    Text(
+                      'Back',
+                      style: TextStyle(
+                          color: AppTheme.textMute,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 14),
-                  _ChoiceCard(
-                    icon: Icons.school_rounded,
-                    label: 'Teacher',
-                    description: 'Create and manage todo lists for your class',
-                    onTap: () => context.push(
-                      RouteNames.register,
-                      extra: {'role': 'teacher'},
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _ChoiceCard(
-                    icon: Icons.person_rounded,
-                    label: 'Student',
-                    description: 'View and complete tasks assigned by your admin',
-                    onTap: () => context.push(
-                      RouteNames.register,
-                      extra: {'role': 'student'},
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Already have an account? ',
-                        style: TextStyle(color: AppTheme.textMute, fontSize: 13),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.push(RouteNames.login),
-                        child: const Text(
-                          'Sign in',
-                          style: TextStyle(
-                            color: AppTheme.accent,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(height: 28),
+              const Text(
+                'Pick your role',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.text,
+                  letterSpacing: -0.8,
+                ),
+              ),
+              const SizedBox(height: 28),
+              _RoleCard(
+                icon: Icons.assignment_rounded,
+                label: "I'm a teacher",
+                description: 'Create classes, assign lists, track completion.',
+                onTap: () => context.push(
+                  RouteNames.register,
+                  extra: {'role': 'teacher'},
+                ),
+              ),
+              const SizedBox(height: 12),
+              _RoleCard(
+                icon: Icons.groups_rounded,
+                label: "I'm a student",
+                description: 'Join with a code, check off your tasks.',
+                onTap: () => context.push(
+                  RouteNames.register,
+                  extra: {'role': 'student'},
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -89,13 +71,13 @@ class RoleSelectionScreen extends StatelessWidget {
   }
 }
 
-class _ChoiceCard extends StatelessWidget {
+class _RoleCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String description;
   final VoidCallback onTap;
 
-  const _ChoiceCard({
+  const _RoleCard({
     required this.icon,
     required this.label,
     required this.description,
@@ -106,26 +88,26 @@ class _ChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppTheme.surface,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.lineSoft),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.line),
           ),
           child: Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: AppTheme.accentSoft,
-                  borderRadius: BorderRadius.circular(13),
+                  color: AppTheme.accentMute,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppTheme.accent, size: 24),
+                child: Icon(icon, color: AppTheme.accent, size: 20),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -135,25 +117,24 @@ class _ChoiceCard extends StatelessWidget {
                     Text(
                       label,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.text,
-                        letterSpacing: -0.1,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       description,
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textMute,
-                      ),
+                          fontSize: 12.5, color: AppTheme.textMute),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppTheme.textFaint, size: 20),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppTheme.textFaint, size: 18),
             ],
           ),
         ),
@@ -161,4 +142,3 @@ class _ChoiceCard extends StatelessWidget {
     );
   }
 }
-
