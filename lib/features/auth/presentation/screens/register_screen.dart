@@ -113,31 +113,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Full name',
-                        prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.person_outline),
+                        border: const OutlineInputBorder(),
+                        helperText: !isTeacher ? 'Your admin can see this' : null,
                       ),
                       textCapitalization: TextCapitalization.words,
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
                     ),
-                    if (!isTeacher) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Your admin can see this',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: const OutlineInputBorder(),
+                        helperText: !isTeacher ? 'Your admin can see this' : null,
                       ),
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
@@ -147,15 +140,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         return null;
                       },
                     ),
-                    if (!isTeacher) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Your admin can see this',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
