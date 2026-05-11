@@ -12,6 +12,9 @@ abstract class PersonalTaskModel with _$PersonalTaskModel {
     required bool isCompleted,
     required int position,
     required DateTime createdAt,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? groupName,
   }) = _PersonalTaskModel;
 
   factory PersonalTaskModel.fromJson(Map<String, dynamic> json) =>

@@ -33,6 +33,9 @@ class PersonalTaskRepository {
     required String userId,
     required String title,
     required int position,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? groupName,
   }) async {
     try {
       final data = await _client
@@ -42,6 +45,9 @@ class PersonalTaskRepository {
             'user_id': userId,
             'title': title,
             'position': position,
+            if (startDate != null) 'start_date': _fmtDate(startDate),
+            if (endDate != null) 'end_date': _fmtDate(endDate),
+            if (groupName != null && groupName.isNotEmpty) 'group_name': groupName,
           })
           .select()
           .single();
@@ -50,6 +56,9 @@ class PersonalTaskRepository {
       throw AppException('Failed to create task', cause: e);
     }
   }
+
+  String _fmtDate(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   Future<void> deleteTask(String taskId) async {
     try {

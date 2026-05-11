@@ -14,6 +14,13 @@ _PersonalTaskModel _$PersonalTaskModelFromJson(Map<String, dynamic> json) =>
       isCompleted: json['is_completed'] as bool,
       position: (json['position'] as num).toInt(),
       createdAt: DateTime.parse(json['created_at'] as String),
+      startDate: json['start_date'] == null
+          ? null
+          : DateTime.parse(json['start_date'] as String),
+      endDate: json['end_date'] == null
+          ? null
+          : DateTime.parse(json['end_date'] as String),
+      groupName: json['group_name'] as String?,
     );
 
 Map<String, dynamic> _$PersonalTaskModelToJson(_PersonalTaskModel instance) =>
@@ -24,4 +31,7 @@ Map<String, dynamic> _$PersonalTaskModelToJson(_PersonalTaskModel instance) =>
       'is_completed': instance.isCompleted,
       'position': instance.position,
       'created_at': instance.createdAt.toIso8601String(),
+      'start_date': instance.startDate?.toIso8601String(),
+      'end_date': instance.endDate?.toIso8601String(),
+      'group_name': instance.groupName,
     };

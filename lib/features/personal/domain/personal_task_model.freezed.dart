@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PersonalTaskModel {
 
- String get id; String get userId; String get title; bool get isCompleted; int get position; DateTime get createdAt;
+ String get id; String get userId; String get title; bool get isCompleted; int get position; DateTime get createdAt; DateTime? get startDate; DateTime? get endDate; String? get groupName;
 /// Create a copy of PersonalTaskModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PersonalTaskModelCopyWith<PersonalTaskModel> get copyWith => _$PersonalTaskMode
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PersonalTaskModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.title, title) || other.title == title)&&(identical(other.isCompleted, isCompleted) || other.isCompleted == isCompleted)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PersonalTaskModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.title, title) || other.title == title)&&(identical(other.isCompleted, isCompleted) || other.isCompleted == isCompleted)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.groupName, groupName) || other.groupName == groupName));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,title,isCompleted,position,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,title,isCompleted,position,createdAt,startDate,endDate,groupName);
 
 @override
 String toString() {
-  return 'PersonalTaskModel(id: $id, userId: $userId, title: $title, isCompleted: $isCompleted, position: $position, createdAt: $createdAt)';
+  return 'PersonalTaskModel(id: $id, userId: $userId, title: $title, isCompleted: $isCompleted, position: $position, createdAt: $createdAt, startDate: $startDate, endDate: $endDate, groupName: $groupName)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PersonalTaskModelCopyWith<$Res>  {
   factory $PersonalTaskModelCopyWith(PersonalTaskModel value, $Res Function(PersonalTaskModel) _then) = _$PersonalTaskModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String title, bool isCompleted, int position, DateTime createdAt
+ String id, String userId, String title, bool isCompleted, int position, DateTime createdAt, DateTime? startDate, DateTime? endDate, String? groupName
 });
 
 
@@ -65,7 +65,7 @@ class _$PersonalTaskModelCopyWithImpl<$Res>
 
 /// Create a copy of PersonalTaskModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? title = null,Object? isCompleted = null,Object? position = null,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? title = null,Object? isCompleted = null,Object? position = null,Object? createdAt = null,Object? startDate = freezed,Object? endDate = freezed,Object? groupName = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,10 @@ as String,title: null == title ? _self.title : title // ignore: cast_nullable_to
 as String,isCompleted: null == isCompleted ? _self.isCompleted : isCompleted // ignore: cast_nullable_to_non_nullable
 as bool,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,startDate: freezed == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,endDate: freezed == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,groupName: freezed == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -158,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt,  DateTime? startDate,  DateTime? endDate,  String? groupName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PersonalTaskModel() when $default != null:
-return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt,_that.startDate,_that.endDate,_that.groupName);case _:
   return orElse();
 
 }
@@ -179,10 +182,10 @@ return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.positi
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt,  DateTime? startDate,  DateTime? endDate,  String? groupName)  $default,) {final _that = this;
 switch (_that) {
 case _PersonalTaskModel():
-return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt,_that.startDate,_that.endDate,_that.groupName);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +202,10 @@ return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.positi
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String userId,  String title,  bool isCompleted,  int position,  DateTime createdAt,  DateTime? startDate,  DateTime? endDate,  String? groupName)?  $default,) {final _that = this;
 switch (_that) {
 case _PersonalTaskModel() when $default != null:
-return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.position,_that.createdAt,_that.startDate,_that.endDate,_that.groupName);case _:
   return null;
 
 }
@@ -214,7 +217,7 @@ return $default(_that.id,_that.userId,_that.title,_that.isCompleted,_that.positi
 @JsonSerializable()
 
 class _PersonalTaskModel implements PersonalTaskModel {
-  const _PersonalTaskModel({required this.id, required this.userId, required this.title, required this.isCompleted, required this.position, required this.createdAt});
+  const _PersonalTaskModel({required this.id, required this.userId, required this.title, required this.isCompleted, required this.position, required this.createdAt, this.startDate, this.endDate, this.groupName});
   factory _PersonalTaskModel.fromJson(Map<String, dynamic> json) => _$PersonalTaskModelFromJson(json);
 
 @override final  String id;
@@ -223,6 +226,9 @@ class _PersonalTaskModel implements PersonalTaskModel {
 @override final  bool isCompleted;
 @override final  int position;
 @override final  DateTime createdAt;
+@override final  DateTime? startDate;
+@override final  DateTime? endDate;
+@override final  String? groupName;
 
 /// Create a copy of PersonalTaskModel
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PersonalTaskModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.title, title) || other.title == title)&&(identical(other.isCompleted, isCompleted) || other.isCompleted == isCompleted)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PersonalTaskModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.title, title) || other.title == title)&&(identical(other.isCompleted, isCompleted) || other.isCompleted == isCompleted)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.groupName, groupName) || other.groupName == groupName));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,title,isCompleted,position,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,title,isCompleted,position,createdAt,startDate,endDate,groupName);
 
 @override
 String toString() {
-  return 'PersonalTaskModel(id: $id, userId: $userId, title: $title, isCompleted: $isCompleted, position: $position, createdAt: $createdAt)';
+  return 'PersonalTaskModel(id: $id, userId: $userId, title: $title, isCompleted: $isCompleted, position: $position, createdAt: $createdAt, startDate: $startDate, endDate: $endDate, groupName: $groupName)';
 }
 
 
@@ -257,7 +263,7 @@ abstract mixin class _$PersonalTaskModelCopyWith<$Res> implements $PersonalTaskM
   factory _$PersonalTaskModelCopyWith(_PersonalTaskModel value, $Res Function(_PersonalTaskModel) _then) = __$PersonalTaskModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String title, bool isCompleted, int position, DateTime createdAt
+ String id, String userId, String title, bool isCompleted, int position, DateTime createdAt, DateTime? startDate, DateTime? endDate, String? groupName
 });
 
 
@@ -274,7 +280,7 @@ class __$PersonalTaskModelCopyWithImpl<$Res>
 
 /// Create a copy of PersonalTaskModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? title = null,Object? isCompleted = null,Object? position = null,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? title = null,Object? isCompleted = null,Object? position = null,Object? createdAt = null,Object? startDate = freezed,Object? endDate = freezed,Object? groupName = freezed,}) {
   return _then(_PersonalTaskModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -282,7 +288,10 @@ as String,title: null == title ? _self.title : title // ignore: cast_nullable_to
 as String,isCompleted: null == isCompleted ? _self.isCompleted : isCompleted // ignore: cast_nullable_to_non_nullable
 as bool,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,startDate: freezed == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,endDate: freezed == endDate ? _self.endDate : endDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,groupName: freezed == groupName ? _self.groupName : groupName // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

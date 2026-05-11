@@ -14,7 +14,12 @@ class PersonalTaskNotifier extends _$PersonalTaskNotifier {
     return ref.read(personalTaskRepositoryProvider).getTasks(profile.id);
   }
 
-  Future<void> addTask(String title) async {
+  Future<void> addTask({
+    required String title,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? groupName,
+  }) async {
     final profile = ref.read(authNotifierProvider).valueOrNull;
     if (profile == null) return;
     final current = state.valueOrNull ?? [];
@@ -22,6 +27,9 @@ class PersonalTaskNotifier extends _$PersonalTaskNotifier {
           userId: profile.id,
           title: title,
           position: current.length,
+          startDate: startDate,
+          endDate: endDate,
+          groupName: groupName,
         );
     state = AsyncData([...current, task]);
   }
