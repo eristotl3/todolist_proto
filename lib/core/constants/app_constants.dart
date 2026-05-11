@@ -5,4 +5,5 @@ class AppConstants {
   static const String todoListsTable = 'todo_lists';
   static const String todoItemsTable = 'todo_items';
   static const String completionsTable = 'todo_completions';
+  static const String personalTasksTable = 'personal_tasks';
 }

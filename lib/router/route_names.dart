@@ -2,7 +2,9 @@ class RouteNames {
   static const String splash = '/';
   static const String login = '/login';
   static const String register = '/register';
+  static const String useCaseSelection = '/use-case-selection';
   static const String roleSelection = '/role-selection';
+  static const String personalHome = '/personal/home';
 
   static const String teacherHome = '/teacher/home';
   static const String classDetail = '/teacher/class/:classId';

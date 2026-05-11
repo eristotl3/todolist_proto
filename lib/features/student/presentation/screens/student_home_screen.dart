@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../router/route_names.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/enrolled_class_model.dart';
 import '../../../../shared/widgets/shimmer_widgets.dart';
@@ -79,7 +80,7 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   if (confirmed != true || !context.mounted) return;
   final router = GoRouter.of(context);
   await ref.read(authNotifierProvider.notifier).signOut();
-  router.go('/role-selection');
+  router.go(RouteNames.useCaseSelection);
 }
 
 class _EmptyState extends StatelessWidget {

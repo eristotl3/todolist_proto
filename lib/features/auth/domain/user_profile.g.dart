@@ -28,4 +28,5 @@ Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
 const _$UserRoleEnumMap = {
   UserRole.teacher: 'teacher',
   UserRole.student: 'student',
+  UserRole.personal: 'personal',
 };

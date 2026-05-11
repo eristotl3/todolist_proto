@@ -7,6 +7,8 @@ import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/role_selection_screen.dart';
+import '../features/auth/presentation/screens/use_case_selection_screen.dart';
+import '../features/personal/presentation/screens/personal_home_screen.dart';
 import '../features/teacher/presentation/screens/teacher_home_screen.dart';
 import '../features/teacher/presentation/screens/class_detail_screen.dart';
 import '../features/teacher/presentation/screens/todo_list_screen.dart';
@@ -48,7 +50,8 @@ GoRouter appRouter(Ref ref) {
         final onAuthOrSplash = state.fullPath == RouteNames.splash ||
             state.fullPath == RouteNames.login ||
             state.fullPath == RouteNames.register ||
-            state.fullPath == RouteNames.roleSelection;
+            state.fullPath == RouteNames.roleSelection ||
+            state.fullPath == RouteNames.useCaseSelection;
         return onAuthOrSplash ? null : RouteNames.splash;
       }
 
@@ -56,18 +59,27 @@ GoRouter appRouter(Ref ref) {
       final isAuthenticated = profile != null;
       final isOnAuthRoute = state.fullPath == RouteNames.login ||
           state.fullPath == RouteNames.register ||
-          state.fullPath == RouteNames.roleSelection;
+          state.fullPath == RouteNames.roleSelection ||
+          state.fullPath == RouteNames.useCaseSelection;
 
-      // Not logged in → send to role selection
+      // Not logged in → send to use-case selection
       if (!isAuthenticated) {
-        return isOnAuthRoute ? null : RouteNames.roleSelection;
+        return isOnAuthRoute ? null : RouteNames.useCaseSelection;
       }
 
-      // Logged in but on auth route or splash → send to home
+      // Logged in but on auth route or splash → send to the right home
       if (isOnAuthRoute || state.fullPath == RouteNames.splash) {
-        return profile.role == UserRole.teacher
-            ? RouteNames.teacherHome
-            : RouteNames.studentHome;
+        if (profile.role == UserRole.teacher) return RouteNames.teacherHome;
+        if (profile.role == UserRole.student) return RouteNames.studentHome;
+        return RouteNames.personalHome;
+      }
+
+      // Block personal users from school routes
+      if (profile.role == UserRole.personal) {
+        if ((state.fullPath?.startsWith('/teacher') ?? false) ||
+            (state.fullPath?.startsWith('/student') ?? false)) {
+          return RouteNames.personalHome;
+        }
       }
 
       // Block students from teacher routes and vice versa
@@ -88,8 +100,16 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
+        path: RouteNames.useCaseSelection,
+        builder: (context, state) => const UseCaseSelectionScreen(),
+      ),
+      GoRoute(
         path: RouteNames.roleSelection,
         builder: (context, state) => const RoleSelectionScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.personalHome,
+        builder: (context, state) => const PersonalHomeScreen(),
       ),
       GoRoute(
         path: RouteNames.login,
