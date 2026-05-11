@@ -30,6 +30,7 @@ dependencies:
   flutter_slidable: ^3.1.1
   shimmer: ^3.0.0
   gap: ^3.0.1
+  flutter_svg: ^2.0.10+1
 
   # Desktop
   window_manager: ^0.4.3
@@ -55,4 +56,5 @@ flutter:
   assets:
     - .env
     - assets/config.env
+    - assets/images/
     - shorebird.yaml

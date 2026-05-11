@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../router/route_names.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../theme/app_theme.dart';
 import '../providers/auth_provider.dart';
+import 'use_case_selection_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -37,7 +39,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState is AsyncLoading;
 
@@ -46,12 +47,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final err = next.error;
         final message = err is AppException ? err.message : err.toString();
         setState(() => _errorMessage = message);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: theme.colorScheme.error,
-          ),
-        );
       }
     });
 
@@ -59,61 +54,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: const BoxConstraints(maxWidth: 440),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(
-                      Icons.checklist_rounded,
-                      size: 64,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
+                    const AppLogo(),
+                    const SizedBox(height: 48),
+                    const Text(
                       'Welcome back',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.text,
+                        letterSpacing: -0.4,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Sign in to ClassTask',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Sign in to your account',
+                      style: TextStyle(fontSize: 13, color: AppTheme.textMute),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 32),
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.mail_outline_rounded, size: 20),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
                       validator: (v) =>
                           (v == null || v.trim().isEmpty) ? 'Enter your email' : null,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility),
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            size: 20,
+                            color: AppTheme.textFaint,
+                          ),
+                          onPressed: () =>
+                              setState(() => _obscurePassword = !_obscurePassword),
                         ),
                       ),
                       obscureText: _obscurePassword,
@@ -121,25 +115,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           (v == null || v.isEmpty) ? 'Enter your password' : null,
                     ),
                     if (_errorMessage != null) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppTheme.danger.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppTheme.danger.withValues(alpha: 0.25),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.error_outline,
-                                color: theme.colorScheme.onErrorContainer,
-                                size: 18),
+                            const Icon(Icons.error_outline_rounded,
+                                color: AppTheme.danger, size: 16),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _errorMessage!,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onErrorContainer,
+                                style: const TextStyle(
+                                  color: AppTheme.danger,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),
@@ -147,34 +144,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     FilledButton(
                       onPressed: isLoading ? null : _submit,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
                       child: isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppTheme.accentInk,
+                              ),
                             )
                           : const Text('Sign In'),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Don't have an account? ",
-                            style: theme.textTheme.bodyMedium),
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(color: AppTheme.textMute, fontSize: 13),
+                        ),
                         GestureDetector(
-                          onTap: () =>
-                              context.push(RouteNames.roleSelection),
-                          child: Text(
+                          onTap: () => context.push(RouteNames.roleSelection),
+                          child: const Text(
                             'Sign up',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.primary,
+                            style: TextStyle(
+                              color: AppTheme.accent,
                               fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
                           ),
                         ),

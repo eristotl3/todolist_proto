@@ -1,47 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../router/route_names.dart';
+import '../../../../theme/app_theme.dart';
 
 class UseCaseSelectionScreen extends StatelessWidget {
   const UseCaseSelectionScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: const BoxConstraints(maxWidth: 440),
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.checklist_rounded,
-                    size: 72,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'ClassTask',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'How are you planning to use it?',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                  const AppLogo(),
                   const SizedBox(height: 48),
-                  _UseCaseCard(
+                  const Text(
+                    'How will you use ClassTask?',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textMute,
+                      letterSpacing: 0.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 14),
+                  _ChoiceCard(
                     icon: Icons.person_rounded,
                     label: 'Personal Use',
                     description: 'Create and manage your own task lists',
@@ -50,29 +42,29 @@ class UseCaseSelectionScreen extends StatelessWidget {
                       extra: {'role': 'personal'},
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _UseCaseCard(
+                  const SizedBox(height: 12),
+                  _ChoiceCard(
                     icon: Icons.school_rounded,
                     label: 'School Use',
-                    description:
-                        'Manage class tasks as a teacher, or track assignments as a student',
+                    description: 'Manage class tasks or track assignments',
                     onTap: () => context.push(RouteNames.roleSelection),
                   ),
                   const SizedBox(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         'Already have an account? ',
-                        style: theme.textTheme.bodyMedium,
+                        style: TextStyle(color: AppTheme.textMute, fontSize: 13),
                       ),
                       GestureDetector(
                         onTap: () => context.push(RouteNames.login),
-                        child: Text(
+                        child: const Text(
                           'Sign in',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.primary,
+                          style: TextStyle(
+                            color: AppTheme.accent,
                             fontWeight: FontWeight.w600,
+                            fontSize: 13,
                           ),
                         ),
                       ),
@@ -88,13 +80,51 @@ class UseCaseSelectionScreen extends StatelessWidget {
   }
 }
 
-class _UseCaseCard extends StatelessWidget {
+class AppLogo extends StatelessWidget {
+  const AppLogo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SvgPicture.asset(
+          'assets/images/logo_penguin.svg',
+          width: 72,
+          height: 72,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'ClassTask',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.text,
+            letterSpacing: -0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Stay organized, stay on track',
+          style: TextStyle(
+            fontSize: 13,
+            color: AppTheme.textMute,
+            letterSpacing: 0,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _ChoiceCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final String description;
   final VoidCallback onTap;
 
-  const _UseCaseCard({
+  const _ChoiceCard({
     required this.icon,
     required this.label,
     required this.description,
@@ -103,52 +133,56 @@ class _UseCaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppTheme.lineSoft),
+          ),
           child: Row(
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.accentSoft,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(icon, color: theme.colorScheme.primary, size: 28),
+                child: Icon(icon, color: AppTheme.accent, size: 24),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       label,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: const TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
+                        color: AppTheme.text,
+                        letterSpacing: -0.1,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMute,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, color: AppTheme.textFaint, size: 20),
             ],
           ),
         ),

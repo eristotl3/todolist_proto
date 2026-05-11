@@ -1,8 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/layout_constants.dart';
 import '../../../../router/route_names.dart';
+import '../../../../theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/class_provider.dart';
 import '../../domain/class_model.dart';
@@ -25,7 +27,7 @@ class TeacherHomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Mobile layout (unchanged behaviour) ──────────────────────────────────────
+// ── Mobile layout ─────────────────────────────────────────────────────────────
 
 class _TeacherMobileHome extends ConsumerWidget {
   const _TeacherMobileHome();
@@ -34,47 +36,69 @@ class _TeacherMobileHome extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(authNotifierProvider).valueOrNull;
     final classesAsync = ref.watch(classNotifierProvider);
+    final firstName = profile?.fullName.split(' ').first ?? 'there';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Classes'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () => _confirmSignOut(context, ref),
-          ),
-        ],
-      ),
       body: classesAsync.when(
-        loading: () => ShimmerListView(
-          itemBuilder: () => const ShimmerClassCard(),
+        loading: () => SafeArea(
+          child: ShimmerListView(itemBuilder: () => const ShimmerClassCard()),
         ),
-        error: (e, _) => _EmptyState(name: profile?.fullName ?? ''),
+        error: (e, _) => SafeArea(
+          child: _EmptyBody(
+            name: profile?.fullName ?? '',
+            firstName: firstName,
+            onSignOut: () => _confirmSignOut(context, ref),
+          ),
+        ),
         data: (classes) => classes.isEmpty
-            ? _EmptyState(name: profile?.fullName ?? '')
+            ? SafeArea(
+                child: _EmptyBody(
+                  name: profile?.fullName ?? '',
+                  firstName: firstName,
+                  onSignOut: () => _confirmSignOut(context, ref),
+                ),
+              )
             : RefreshIndicator(
+                color: AppTheme.accent,
                 onRefresh: () =>
                     ref.read(classNotifierProvider.notifier).refresh(),
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: classes.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
-                  itemBuilder: (_, i) => _ClassCard(
-                    classModel: classes[i],
-                    onTap: () => context.push(
-                      '/teacher/home/class/${classes[i].id}',
-                      extra: classes[i],
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: _TeacherHeader(
+                        firstName: firstName,
+                        classCount: classes.length,
+                        onSignOut: () => _confirmSignOut(context, ref),
+                      ),
                     ),
-                    onDelete: () => _confirmDelete(context, ref, classes[i]),
-                  ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _ClassCard(
+                              classModel: classes[i],
+                              colorIndex: i,
+                              onTap: () => context.push(
+                                '/teacher/home/class/${classes[i].id}',
+                                extra: classes[i],
+                              ),
+                              onDelete: () =>
+                                  _confirmDelete(context, ref, classes[i]),
+                            ),
+                          ),
+                          childCount: classes.length,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateDialog(context, ref),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add, size: 20),
         label: const Text('New Class'),
       ),
     );
@@ -95,7 +119,6 @@ class _TeacherMobileHome extends ConsumerWidget {
             decoration: const InputDecoration(
               labelText: 'Class name',
               hintText: 'e.g. Math Period 3',
-              border: OutlineInputBorder(),
             ),
             textCapitalization: TextCapitalization.words,
             validator: (v) =>
@@ -121,13 +144,13 @@ class _TeacherMobileHome extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed to create class: $e'),
-                      backgroundColor:
-                          Theme.of(context).colorScheme.error,
+                      backgroundColor: AppTheme.danger,
                     ),
                   );
                 }
               }
             },
+            style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
             child: const Text('Create'),
           ),
         ],
@@ -150,7 +173,9 @@ class _TeacherMobileHome extends ConsumerWidget {
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error),
+                backgroundColor: AppTheme.danger,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(80, 40)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete'),
           ),
@@ -162,6 +187,72 @@ class _TeacherMobileHome extends ConsumerWidget {
     }
   }
 }
+
+// ── Teacher header ────────────────────────────────────────────────────────────
+
+class _TeacherHeader extends StatelessWidget {
+  final String firstName;
+  final int classCount;
+  final VoidCallback onSignOut;
+
+  const _TeacherHeader({
+    required this.firstName,
+    required this.classCount,
+    required this.onSignOut,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppTheme.accent,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        MediaQuery.of(context).padding.top + 16,
+        24,
+        28,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hi, $firstName 👋',
+                  style: const TextStyle(
+                    color: AppTheme.accentInk,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  classCount == 1 ? '1 class' : '$classCount classes',
+                  style: TextStyle(
+                    color: AppTheme.accentInk.withValues(alpha: 0.75),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded,
+                color: AppTheme.accentInk, size: 20),
+            tooltip: 'Sign out',
+            onPressed: onSignOut,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Sign out ──────────────────────────────────────────────────────────────────
 
 Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   final confirmed = await showDialog<bool>(
@@ -176,6 +267,7 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
+          style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
           child: const Text('Sign out'),
         ),
       ],
@@ -187,132 +279,219 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   router.go(RouteNames.useCaseSelection);
 }
 
-class _EmptyState extends StatelessWidget {
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+class _EmptyBody extends StatelessWidget {
   final String name;
-  const _EmptyState({required this.name});
+  final String firstName;
+  final VoidCallback onSignOut;
+
+  const _EmptyBody({
+    required this.name,
+    required this.firstName,
+    required this.onSignOut,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.class_outlined,
-                size: 72, color: theme.colorScheme.outline),
-            const SizedBox(height: 16),
-            Text('Welcome, $name!',
-                style: theme.textTheme.titleLarge,
-                textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            Text('Create your first class to get started.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant),
-                textAlign: TextAlign.center),
-          ],
+    return Column(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.accent,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            MediaQuery.of(context).padding.top + 16,
+            24,
+            28,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Hi, $firstName 👋',
+                  style: const TextStyle(
+                    color: AppTheme.accentInk,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout_rounded,
+                    color: AppTheme.accentInk, size: 20),
+                tooltip: 'Sign out',
+                onPressed: onSignOut,
+              ),
+            ],
+          ),
         ),
-      ),
+        const Expanded(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.class_outlined, size: 64, color: AppTheme.line),
+                  SizedBox(height: 16),
+                  Text('No classes yet',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.text)),
+                  SizedBox(height: 8),
+                  Text(
+                    "Tap 'New Class' to get started.",
+                    style: TextStyle(color: AppTheme.textMute, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
+// ── Class card ────────────────────────────────────────────────────────────────
+
 class _ClassCard extends StatelessWidget {
   final ClassModel classModel;
+  final int colorIndex;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
   const _ClassCard({
     required this.classModel,
+    required this.colorIndex,
     required this.onTap,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
+    final palette = AppTheme.classColors[colorIndex % AppTheme.classColors.length];
+    final initials = _initials(classModel.name);
+
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
           padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.lineSoft),
+          ),
           child: Row(
             children: [
+              // Color-coded initials circle
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  color: palette.bg,
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(Icons.class_rounded,
-                    color: theme.colorScheme.primary),
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: TextStyle(
+                      color: palette.fg,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(classModel.name,
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
+                    Text(
+                      classModel.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.text,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
                     Row(
                       children: [
-                        Icon(Icons.people_outline,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text('${classModel.studentCount} students',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
-                        const SizedBox(width: 12),
-                        Icon(Icons.checklist_rounded,
-                            size: 14,
-                            color: theme.colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text('${classModel.listCount} lists',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Code: ${classModel.code}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
+                        const Icon(Icons.people_outline_rounded,
+                            size: 12, color: AppTheme.textFaint),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${classModel.studentCount}',
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textMute),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        const Icon(Icons.checklist_rounded,
+                            size: 12, color: AppTheme.textFaint),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${classModel.listCount} lists',
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textMute),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface2,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            classModel.code,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textMute,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.delete_outline,
-                    color: theme.colorScheme.error),
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: AppTheme.danger, size: 18),
                 onPressed: onDelete,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 36, minHeight: 36),
               ),
-              const Icon(Icons.chevron_right),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppTheme.textFaint, size: 20),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _initials(String name) {
+    final words = name.trim().split(RegExp(r'\s+'));
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, math.min(2, name.length)).toUpperCase();
   }
 }
