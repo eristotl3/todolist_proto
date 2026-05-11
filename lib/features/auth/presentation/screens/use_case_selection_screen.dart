@@ -42,7 +42,7 @@ class UseCaseSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 48),
                   _UseCaseCard(
-                    icon: Icons.person_outline_rounded,
+                    icon: Icons.person_rounded,
                     label: 'Personal Use',
                     description: 'Create and manage your own task lists',
                     onTap: () => context.push(
