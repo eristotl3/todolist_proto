@@ -34,7 +34,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
           fullName: _nameController.text.trim(),
-          role: widget.role == 'teacher' ? UserRole.teacher : UserRole.student,
+          role: widget.role == 'teacher'
+              ? UserRole.teacher
+              : widget.role == 'personal'
+                  ? UserRole.personal
+                  : UserRole.student,
         );
   }
 
@@ -68,9 +72,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     final isTeacher = widget.role == 'teacher';
+    final isPersonal = widget.role == 'personal';
+    final isStudent = widget.role == 'student';
+
+    String pageTitle;
+    String bannerText;
+    if (isTeacher) {
+      pageTitle = 'Teacher Sign Up';
+      bannerText = 'Creating a teacher account';
+    } else if (isPersonal) {
+      pageTitle = 'Personal Sign Up';
+      bannerText = 'Creating a personal account';
+    } else {
+      pageTitle = 'Student Sign Up';
+      bannerText = 'Creating a student account';
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(isTeacher ? 'Teacher Sign Up' : 'Student Sign Up'),
+        title: Text(pageTitle),
       ),
       body: SafeArea(
         child: Center(
@@ -99,9 +119,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            isTeacher
-                                ? 'Creating a teacher account'
-                                : 'Creating a student account',
+                            bannerText,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.w500,
@@ -117,7 +135,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         labelText: 'Full name',
                         prefixIcon: const Icon(Icons.person_outline),
                         border: const OutlineInputBorder(),
-                        helperText: !isTeacher ? 'Your admin can see this' : null,
+                        helperText: isStudent ? 'Your admin can see this' : null,
                       ),
                       textCapitalization: TextCapitalization.words,
                       validator: (v) =>
@@ -130,7 +148,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         labelText: 'Email',
                         prefixIcon: const Icon(Icons.email_outlined),
                         border: const OutlineInputBorder(),
-                        helperText: !isTeacher ? 'Your admin can see this' : null,
+                        helperText: isStudent ? 'Your admin can see this' : null,
                       ),
                       keyboardType: TextInputType.emailAddress,
                       autocorrect: false,
