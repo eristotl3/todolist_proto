@@ -263,7 +263,7 @@ class _SidebarHeader extends StatelessWidget {
               color: theme.colorScheme.primary, size: 24),
           const SizedBox(width: 10),
           Expanded(
-            child: Text('ClassTask',
+            child: Text('Pengulist',
                 style: theme.textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.bold)),
           ),

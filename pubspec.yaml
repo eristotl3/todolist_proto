@@ -1,5 +1,5 @@
 name: todolist_proto
-description: "Teacher-student todo list app with real-time completion tracking."
+description: "Pengulist — organize classes, assign tasks, and track student progress."
 publish_to: 'none'
 version: 1.0.0+3
 

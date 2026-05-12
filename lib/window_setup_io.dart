@@ -6,7 +6,7 @@ Future<void> setupWindow() async {
   const windowOptions = WindowOptions(
     minimumSize: Size(800, 600),
     size: Size(1100, 750),
-    title: 'ClassTask',
+    title: 'Pengulist',
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();

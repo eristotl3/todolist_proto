@@ -150,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Sign in to your ClassTask account.',
+                  'Sign in to your Pengulist account.',
                   style: TextStyle(fontSize: 15, color: AppTheme.textMute),
                 ),
                 const SizedBox(height: 28),

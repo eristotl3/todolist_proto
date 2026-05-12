@@ -30,7 +30,7 @@ class UseCaseSelectionScreen extends StatelessWidget {
                     const AppLogo(),
                     const SizedBox(height: 36),
                     const Text(
-                      'How will you\nuse ClassTask?',
+                      'How will you\nuse Pengulist?',
                       style: TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w600,
@@ -118,7 +118,7 @@ class AppLogo extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         const Text(
-          'ClassTask',
+          'Pengulist',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,

@@ -1,6 +1,6 @@
 {
-    "name": "todolist_proto",
-    "short_name": "todolist_proto",
+    "name": "Pengulist",
+    "short_name": "Pengulist",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
