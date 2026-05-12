@@ -21,16 +21,10 @@ import '../features/student/presentation/screens/student_todo_screen.dart';
 import '../features/student/domain/enrolled_class_model.dart';
 import '../features/student/domain/student_todo_list_model.dart';
 import '../features/auth/presentation/screens/profile_screen.dart';
+import '../features/auth/presentation/screens/splash_screen.dart';
 import 'route_names.dart';
 
 part 'app_router.g.dart';
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: CircularProgressIndicator()));
-}
 
 @riverpod
 GoRouter appRouter(Ref ref) {
