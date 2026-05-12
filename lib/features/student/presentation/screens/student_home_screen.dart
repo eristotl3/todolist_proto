@@ -2,9 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../router/route_names.dart';
-
 import '../../../../theme/app_theme.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/enrolled_class_model.dart';
@@ -17,141 +17,130 @@ class StudentHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(authNotifierProvider).valueOrNull;
     final classesAsync = ref.watch(enrolledClassesNotifierProvider);
+    final assignedAsync = ref.watch(assignedListsNotifierProvider);
     final firstName = profile?.fullName.split(' ').first ?? 'there';
+
+    void onProfile() => context.push('/profile');
+    void onSignOut() => _confirmSignOut(context, ref);
+
+    // Overall task progress across all assigned lists
+    final (done, total) = assignedAsync.maybeWhen(
+      data: (lists) {
+        final d = lists.fold(0, (s, l) => s + l.completedCount);
+        final t = lists.fold(0, (s, l) => s + l.itemCount);
+        return (d, t);
+      },
+      orElse: () => (0, 0),
+    );
+    final pct = total == 0 ? 0.0 : done / total;
+
+    Widget shell(int classCount, {required Widget child}) {
+      final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
+      return CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                22,
+                MediaQuery.of(context).padding.top + 20,
+                22,
+                0,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          today,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textMute,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Hi, $firstName.',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.text,
+                            letterSpacing: -0.7,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _IconBtn(icon: Icons.person_outline_rounded, onTap: onProfile),
+                  const SizedBox(width: 8),
+                  _IconBtn(icon: Icons.logout_rounded, onTap: onSignOut),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 4),
+              child: _StudentHeroCard(
+                classCount: classCount,
+                done: done,
+                total: total,
+                pct: pct,
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(22, 14, 22, 0),
+            sliver: SliverFillRemaining(
+              hasScrollBody: true,
+              child: child,
+            ),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       body: classesAsync.when(
-        loading: () => SafeArea(
-          child: ShimmerListView(itemBuilder: () => const ShimmerClassCard()),
-        ),
-        error: (e, _) => SafeArea(
-          child: _EmptyBody(
-            firstName: firstName,
-            onProfile: () => context.push('/profile'),
-            onSignOut: () => _confirmSignOut(context, ref),
-          ),
-        ),
-        data: (classes) => classes.isEmpty
-            ? SafeArea(
-                child: _EmptyBody(
-                  firstName: firstName,
-                  onProfile: () => context.push('/profile'),
-                  onSignOut: () => _confirmSignOut(context, ref),
-                ),
-              )
-            : RefreshIndicator(
-                color: AppTheme.accent,
-                onRefresh: () =>
-                    ref.read(enrolledClassesNotifierProvider.notifier).refresh(),
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: _StudentHeader(
-                        firstName: firstName,
-                        classCount: classes.length,
-                        onProfile: () => context.push('/profile'),
-                        onSignOut: () => _confirmSignOut(context, ref),
+        loading: () => shell(0,
+            child:
+                ShimmerListView(itemBuilder: () => const ShimmerClassCard())),
+        error: (e, _) =>
+            shell(0, child: const _EmptyEnrolledPlaceholder()),
+        data: (classes) {
+          final body = classes.isEmpty
+              ? const _EmptyEnrolledPlaceholder()
+              : RefreshIndicator(
+                  color: AppTheme.accent,
+                  onRefresh: () => ref
+                      .read(enrolledClassesNotifierProvider.notifier)
+                      .refresh(),
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
+                    itemCount: classes.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _ClassCard(
+                      classModel: classes[i],
+                      colorIndex: i,
+                      onTap: () => context.push(
+                        '/student/home/class/${classes[i].id}',
+                        extra: classes[i],
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (_, i) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _ClassCard(
-                              classModel: classes[i],
-                              colorIndex: i,
-                              onTap: () => context.push(
-                                '/student/home/class/${classes[i].id}',
-                                extra: classes[i],
-                              ),
-                            ),
-                          ),
-                          childCount: classes.length,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+          return shell(classes.length, child: body);
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/student/home/join-class'),
         icon: const Icon(Icons.add, size: 20),
         label: const Text('Join Class'),
-      ),
-    );
-  }
-}
-
-// ── Student header ────────────────────────────────────────────────────────────
-
-class _StudentHeader extends StatelessWidget {
-  final String firstName;
-  final int classCount;
-  final VoidCallback onProfile;
-  final VoidCallback onSignOut;
-
-  const _StudentHeader({
-    required this.firstName,
-    required this.classCount,
-    required this.onProfile,
-    required this.onSignOut,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.accent,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        MediaQuery.of(context).padding.top + 16,
-        24,
-        28,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi, $firstName 👋',
-                  style: const TextStyle(
-                    color: AppTheme.accentInk,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  classCount == 1 ? '1 class enrolled' : '$classCount classes enrolled',
-                  style: TextStyle(
-                    color: AppTheme.accentInk.withValues(alpha: 0.75),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded,
-                color: AppTheme.accentInk, size: 20),
-            tooltip: 'Profile',
-            onPressed: onProfile,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded,
-                color: AppTheme.accentInk, size: 20),
-            tooltip: 'Sign out',
-            onPressed: onSignOut,
-          ),
-        ],
       ),
     );
   }
@@ -184,88 +173,251 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
   router.go(RouteNames.useCaseSelection);
 }
 
-// ── Empty body ────────────────────────────────────────────────────────────────
+// ── Small icon button ─────────────────────────────────────────────────────────
 
-class _EmptyBody extends StatelessWidget {
-  final String firstName;
-  final VoidCallback onProfile;
-  final VoidCallback onSignOut;
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _IconBtn({required this.icon, required this.onTap});
 
-  const _EmptyBody({
-    required this.firstName,
-    required this.onProfile,
-    required this.onSignOut,
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.line),
+        ),
+        child: Icon(icon, size: 17, color: AppTheme.textMute),
+      ),
+    );
+  }
+}
+
+// ── Student hero card ─────────────────────────────────────────────────────────
+
+class _StudentHeroCard extends StatelessWidget {
+  final int classCount;
+  final int done;
+  final int total;
+  final double pct;
+
+  const _StudentHeroCard({
+    required this.classCount,
+    required this.done,
+    required this.total,
+    required this.pct,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            color: AppTheme.accent,
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+    final subtitle = total == 0
+        ? classCount == 0
+            ? 'Join a class to get started'
+            : 'No tasks assigned yet'
+        : done == total
+            ? 'All done — great work!'
+            : '${total - done} tasks remaining';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.accent,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accent.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
-          padding: EdgeInsets.fromLTRB(
-            24,
-            MediaQuery.of(context).padding.top + 16,
-            24,
-            28,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Hi, $firstName 👋',
-                  style: const TextStyle(
-                    color: AppTheme.accentInk,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.person_outline_rounded,
-                    color: AppTheme.accentInk, size: 20),
-                tooltip: 'Profile',
-                onPressed: onProfile,
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout_rounded,
-                    color: AppTheme.accentInk, size: 20),
-                tooltip: 'Sign out',
-                onPressed: onSignOut,
-              ),
-            ],
-          ),
-        ),
-        const Expanded(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.school_outlined, size: 64, color: AppTheme.line),
-                  SizedBox(height: 16),
-                  Text('No classes yet',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.text)),
-                  SizedBox(height: 8),
-                  Text(
-                    "Tap 'Join Class' to get started.",
-                    style: TextStyle(color: AppTheme.textMute, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+        ],
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
-        ),
-      ],
+          Positioned(
+            right: -60,
+            bottom: -50,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'YOUR PROGRESS',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.accentInk,
+                        letterSpacing: 0.1,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$done',
+                            style: const TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentInk,
+                              letterSpacing: -1.2,
+                              height: 1,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' / $total',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.accentInk.withValues(alpha: 0.5),
+                              letterSpacing: -0.5,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.accentInk.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _ProgressRing(pct: pct),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Progress ring ─────────────────────────────────────────────────────────────
+
+class _ProgressRing extends StatelessWidget {
+  final double pct;
+  const _ProgressRing({required this.pct});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: CustomPaint(painter: _RingPainter(pct: pct)),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double pct;
+  const _RingPainter({required this.pct});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 6.0;
+    final center = Offset(size.width / 2, size.height / 2);
+    final r = (size.width - stroke) / 2;
+    canvas.drawCircle(
+      center,
+      r,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.18)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke,
+    );
+    if (pct > 0) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: r),
+        -math.pi / 2,
+        2 * math.pi * pct,
+        false,
+        Paint()
+          ..color = AppTheme.accentInk
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => old.pct != pct;
+}
+
+// ── Empty placeholder ─────────────────────────────────────────────────────────
+
+class _EmptyEnrolledPlaceholder extends StatelessWidget {
+  const _EmptyEnrolledPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppTheme.surface2,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Icons.school_outlined,
+                size: 26, color: AppTheme.textMute),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'No classes yet',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.text),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Tap 'Join Class' to get started.",
+            style: TextStyle(fontSize: 13.5, color: AppTheme.textMute),
+          ),
+        ],
+      ),
     );
   }
 }
