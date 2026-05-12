@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../router/route_names.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../theme/app_theme.dart';
+import '../../data/auth_repository.dart';
 import '../providers/auth_provider.dart';
 import 'use_case_selection_screen.dart';
 
@@ -26,6 +27,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showForgotPassword(BuildContext context) async {
+    final emailController =
+        TextEditingController(text: _emailController.text.trim());
+    final formKey = GlobalKey<FormState>();
+    bool sending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Reset Password'),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: emailController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'you@example.com',
+              ),
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Enter your email' : null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() => sending = true);
+                      try {
+                        await AuthRepository().resetPassword(
+                          emailController.text.trim(),
+                        );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Reset link sent — check your email')),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => sending = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e is AppException
+                                  ? e.message
+                                  : e.toString()),
+                              backgroundColor: AppTheme.danger,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
+              child: sending
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Send link'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -114,6 +192,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: _obscurePassword,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'Enter your password' : null,
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => _showForgotPassword(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('Forgot password?',
+                        style: TextStyle(fontSize: 12)),
+                  ),
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 12),

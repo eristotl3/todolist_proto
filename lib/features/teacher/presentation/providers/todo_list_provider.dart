@@ -39,6 +39,22 @@ class TodoListNotifier extends _$TodoListNotifier {
     state = AsyncData(current.where((l) => l.id != listId).toList());
   }
 
+  Future<void> editList({
+    required String listId,
+    required String title,
+    String? description,
+    DateTime? dueDate,
+  }) async {
+    final updated = await ref.read(todoRepositoryProvider).updateList(
+      listId: listId, title: title, description: description, dueDate: dueDate,
+    );
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(current.map((l) {
+      if (l.id != listId) return l;
+      return updated.copyWith(itemCount: l.itemCount);
+    }).toList());
+  }
+
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => build(classId));
@@ -72,6 +88,22 @@ class TodoItemNotifier extends _$TodoItemNotifier {
     await ref.read(todoRepositoryProvider).deleteItem(itemId);
     final current = state.valueOrNull ?? [];
     state = AsyncData(current.where((i) => i.id != itemId).toList());
+  }
+
+  Future<void> editItem({
+    required String itemId,
+    required String title,
+    String? description,
+    DateTime? dueDate,
+  }) async {
+    final updated = await ref.read(todoRepositoryProvider).updateItem(
+      itemId: itemId, title: title, description: description, dueDate: dueDate,
+    );
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(current.map((i) {
+      if (i.id != itemId) return i;
+      return updated.copyWith(completionCount: i.completionCount);
+    }).toList());
   }
 
   Future<void> refresh() async {

@@ -20,6 +20,7 @@ import '../features/student/presentation/screens/student_class_detail_screen.dar
 import '../features/student/presentation/screens/student_todo_screen.dart';
 import '../features/student/domain/enrolled_class_model.dart';
 import '../features/student/domain/student_todo_list_model.dart';
+import '../features/auth/presentation/screens/profile_screen.dart';
 import 'route_names.dart';
 
 part 'app_router.g.dart';
@@ -114,6 +115,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RouteNames.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
         path: RouteNames.register,

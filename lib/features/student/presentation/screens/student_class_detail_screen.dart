@@ -7,6 +7,10 @@ import '../providers/enrolled_classes_provider.dart';
 import '../../../../core/extensions/datetime_extensions.dart';
 import '../../../../shared/widgets/shimmer_widgets.dart';
 import '../../../../shared/widgets/error_retry_widget.dart';
+import '../../../../theme/app_theme.dart';
+
+int _classColorIndex(String classId) =>
+    classId.codeUnits.fold(0, (a, b) => a + b) % AppTheme.classColors.length;
 
 class StudentClassDetailScreen extends ConsumerWidget {
   final EnrolledClassModel classModel;
@@ -84,9 +88,10 @@ class StudentClassDetailScreen extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: lists.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _TaskListCard(
                     todoList: lists[i],
+                    classColorIndex: _classColorIndex(classModel.id),
                     onTap: () => context.push(
                       '/student/home/class/${classModel.id}/todo/${lists[i].id}',
                       extra: lists[i],
@@ -101,13 +106,19 @@ class StudentClassDetailScreen extends ConsumerWidget {
 
 class _TaskListCard extends StatelessWidget {
   final StudentTodoListModel todoList;
+  final int classColorIndex;
   final VoidCallback onTap;
 
-  const _TaskListCard({required this.todoList, required this.onTap});
+  const _TaskListCard({
+    required this.todoList,
+    required this.classColorIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final palette = AppTheme.classColors[classColorIndex];
     final isOverdue = todoList.dueDate != null &&
         todoList.dueDate!.isOverdue &&
         todoList.completedCount < todoList.itemCount;
@@ -143,22 +154,22 @@ class _TaskListCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isComplete
-                          ? theme.colorScheme.primaryContainer
-                          : isOverdue
-                              ? theme.colorScheme.errorContainer
-                              : theme.colorScheme.surfaceContainerHighest,
+                      color: isOverdue
+                          ? theme.colorScheme.errorContainer
+                          : isComplete
+                              ? theme.colorScheme.primaryContainer
+                              : palette.bg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       isComplete
                           ? Icons.check_circle_rounded
                           : Icons.checklist_rounded,
-                      color: isComplete
-                          ? theme.colorScheme.primary
-                          : isOverdue
-                              ? theme.colorScheme.error
-                              : theme.colorScheme.onSurfaceVariant,
+                      color: isOverdue
+                          ? theme.colorScheme.error
+                          : isComplete
+                              ? theme.colorScheme.primary
+                              : palette.fg,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -180,11 +191,11 @@ class _TaskListCard extends StatelessWidget {
                       value: progress,
                       borderRadius: BorderRadius.circular(4),
                       minHeight: 6,
-                      color: isComplete
-                          ? theme.colorScheme.primary
-                          : isOverdue
-                              ? theme.colorScheme.error
-                              : null,
+                      color: isOverdue
+                          ? theme.colorScheme.error
+                          : isComplete
+                              ? theme.colorScheme.primary
+                              : palette.bg,
                     ),
                   ),
                   const SizedBox(width: 12),

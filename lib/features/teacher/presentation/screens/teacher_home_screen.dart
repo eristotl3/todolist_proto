@@ -47,6 +47,7 @@ class _TeacherMobileHome extends ConsumerWidget {
           child: _EmptyBody(
             name: profile?.fullName ?? '',
             firstName: firstName,
+            onProfile: () => context.push('/profile'),
             onSignOut: () => _confirmSignOut(context, ref),
           ),
         ),
@@ -55,6 +56,7 @@ class _TeacherMobileHome extends ConsumerWidget {
                 child: _EmptyBody(
                   name: profile?.fullName ?? '',
                   firstName: firstName,
+                  onProfile: () => context.push('/profile'),
                   onSignOut: () => _confirmSignOut(context, ref),
                 ),
               )
@@ -68,6 +70,7 @@ class _TeacherMobileHome extends ConsumerWidget {
                       child: _TeacherHeader(
                         firstName: firstName,
                         classCount: classes.length,
+                        onProfile: () => context.push('/profile'),
                         onSignOut: () => _confirmSignOut(context, ref),
                       ),
                     ),
@@ -84,6 +87,8 @@ class _TeacherMobileHome extends ConsumerWidget {
                                 '/teacher/home/class/${classes[i].id}',
                                 extra: classes[i],
                               ),
+                              onEdit: () =>
+                                  _showEditDialog(context, ref, classes[i]),
                               onDelete: () =>
                                   _confirmDelete(context, ref, classes[i]),
                             ),
@@ -100,6 +105,58 @@ class _TeacherMobileHome extends ConsumerWidget {
         onPressed: () => _showCreateDialog(context, ref),
         icon: const Icon(Icons.add, size: 20),
         label: const Text('New Class'),
+      ),
+    );
+  }
+
+  Future<void> _showEditDialog(
+      BuildContext context, WidgetRef ref, ClassModel c) async {
+    final controller = TextEditingController(text: c.name);
+    final formKey = GlobalKey<FormState>();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename Class'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Class name'),
+            textCapitalization: TextCapitalization.words,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter a class name' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final name = controller.text.trim();
+              Navigator.pop(ctx);
+              try {
+                await ref
+                    .read(classNotifierProvider.notifier)
+                    .editClass(c.id, name);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to rename: $e'),
+                      backgroundColor: AppTheme.danger,
+                    ),
+                  );
+                }
+              }
+            },
+            style: FilledButton.styleFrom(minimumSize: const Size(80, 40)),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
   }
@@ -193,11 +250,13 @@ class _TeacherMobileHome extends ConsumerWidget {
 class _TeacherHeader extends StatelessWidget {
   final String firstName;
   final int classCount;
+  final VoidCallback onProfile;
   final VoidCallback onSignOut;
 
   const _TeacherHeader({
     required this.firstName,
     required this.classCount,
+    required this.onProfile,
     required this.onSignOut,
   });
 
@@ -239,6 +298,12 @@ class _TeacherHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded,
+                color: AppTheme.accentInk, size: 20),
+            tooltip: 'Profile',
+            onPressed: onProfile,
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded,
@@ -285,11 +350,13 @@ class _EmptyBody extends StatelessWidget {
   final String name;
   final String firstName;
   final VoidCallback onSignOut;
+  final VoidCallback? onProfile;
 
   const _EmptyBody({
     required this.name,
     required this.firstName,
     required this.onSignOut,
+    this.onProfile,
   });
 
   @override
@@ -320,6 +387,13 @@ class _EmptyBody extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onProfile != null)
+                IconButton(
+                  icon: const Icon(Icons.person_outline_rounded,
+                      color: AppTheme.accentInk, size: 20),
+                  tooltip: 'Profile',
+                  onPressed: onProfile,
+                ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded,
                     color: AppTheme.accentInk, size: 20),
@@ -365,12 +439,14 @@ class _ClassCard extends StatelessWidget {
   final ClassModel classModel;
   final int colorIndex;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ClassCard({
     required this.classModel,
     required this.colorIndex,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -469,6 +545,15 @@ class _ClassCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined,
+                    color: AppTheme.textMute, size: 18),
+                onPressed: onEdit,
+                padding: EdgeInsets.zero,
+                constraints:
+                    const BoxConstraints(minWidth: 36, minHeight: 36),
+                tooltip: 'Rename',
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline_rounded,

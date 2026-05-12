@@ -68,6 +68,33 @@ class AuthRepository {
     await _client.auth.signOut();
   }
 
+  Future<void> resetPassword(String email) async {
+    try {
+      await _client.auth.resetPasswordForEmail(email.trim());
+    } on AuthException catch (e) {
+      throw AppException(e.message);
+    } catch (e) {
+      throw AppException('Failed to send reset email', cause: e);
+    }
+  }
+
+  Future<UserProfile> updateProfile({
+    required String userId,
+    required String fullName,
+  }) async {
+    try {
+      final data = await _client
+          .from(AppConstants.profilesTable)
+          .update({'full_name': fullName})
+          .eq('id', userId)
+          .select()
+          .single();
+      return UserProfile.fromJson(data);
+    } catch (e) {
+      throw AppException('Failed to update profile', cause: e);
+    }
+  }
+
   Future<UserProfile?> getCurrentProfile() async {
     final user = _client.auth.currentUser;
     if (user == null) return null;

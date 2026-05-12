@@ -30,6 +30,15 @@ class ClassNotifier extends _$ClassNotifier {
     state = AsyncData(current.where((c) => c.id != classId).toList());
   }
 
+  Future<void> editClass(String classId, String name) async {
+    final updated = await ref.read(classRepositoryProvider).updateClass(classId, name);
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(current.map((c) {
+      if (c.id != classId) return c;
+      return updated.copyWith(studentCount: c.studentCount, listCount: c.listCount);
+    }).toList());
+  }
+
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => build());

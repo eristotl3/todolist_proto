@@ -77,6 +77,20 @@ class ClassRepository {
     }
   }
 
+  Future<ClassModel> updateClass(String classId, String name) async {
+    try {
+      final data = await _client
+          .from(AppConstants.classesTable)
+          .update({'name': name})
+          .eq('id', classId)
+          .select()
+          .single();
+      return ClassModel.fromJson(data);
+    } catch (e) {
+      throw AppException('Failed to update class', cause: e);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getEnrolledStudents(String classId) async {
     try {
       final data = await _client

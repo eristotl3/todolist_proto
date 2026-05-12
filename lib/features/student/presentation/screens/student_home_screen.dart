@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../router/route_names.dart';
+
 import '../../../../theme/app_theme.dart';
 import '../providers/enrolled_classes_provider.dart';
 import '../../domain/enrolled_class_model.dart';
@@ -26,6 +27,7 @@ class StudentHomeScreen extends ConsumerWidget {
         error: (e, _) => SafeArea(
           child: _EmptyBody(
             firstName: firstName,
+            onProfile: () => context.push('/profile'),
             onSignOut: () => _confirmSignOut(context, ref),
           ),
         ),
@@ -33,6 +35,7 @@ class StudentHomeScreen extends ConsumerWidget {
             ? SafeArea(
                 child: _EmptyBody(
                   firstName: firstName,
+                  onProfile: () => context.push('/profile'),
                   onSignOut: () => _confirmSignOut(context, ref),
                 ),
               )
@@ -46,6 +49,7 @@ class StudentHomeScreen extends ConsumerWidget {
                       child: _StudentHeader(
                         firstName: firstName,
                         classCount: classes.length,
+                        onProfile: () => context.push('/profile'),
                         onSignOut: () => _confirmSignOut(context, ref),
                       ),
                     ),
@@ -86,11 +90,13 @@ class StudentHomeScreen extends ConsumerWidget {
 class _StudentHeader extends StatelessWidget {
   final String firstName;
   final int classCount;
+  final VoidCallback onProfile;
   final VoidCallback onSignOut;
 
   const _StudentHeader({
     required this.firstName,
     required this.classCount,
+    required this.onProfile,
     required this.onSignOut,
   });
 
@@ -132,6 +138,12 @@ class _StudentHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded,
+                color: AppTheme.accentInk, size: 20),
+            tooltip: 'Profile',
+            onPressed: onProfile,
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded,
@@ -176,9 +188,14 @@ Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
 
 class _EmptyBody extends StatelessWidget {
   final String firstName;
+  final VoidCallback onProfile;
   final VoidCallback onSignOut;
 
-  const _EmptyBody({required this.firstName, required this.onSignOut});
+  const _EmptyBody({
+    required this.firstName,
+    required this.onProfile,
+    required this.onSignOut,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +224,12 @@ class _EmptyBody extends StatelessWidget {
                     letterSpacing: -0.3,
                   ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.person_outline_rounded,
+                    color: AppTheme.accentInk, size: 20),
+                tooltip: 'Profile',
+                onPressed: onProfile,
               ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded,

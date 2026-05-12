@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/todo_list_model.dart';
 import '../providers/todo_list_provider.dart';
 import '../widgets/due_date_picker_widget.dart';
 
 class CreateListScreen extends ConsumerStatefulWidget {
   final String classId;
-  const CreateListScreen({super.key, required this.classId});
+  final TodoListModel? initialList;
+
+  const CreateListScreen({super.key, required this.classId, this.initialList});
 
   @override
   ConsumerState<CreateListScreen> createState() => _CreateListScreenState();
@@ -18,6 +21,18 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
   DateTime? _dueDate;
   bool _isLoading = false;
 
+  bool get _isEditing => widget.initialList != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      _titleController.text = widget.initialList!.title;
+      _descController.text = widget.initialList!.description ?? '';
+      _dueDate = widget.initialList!.dueDate;
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -29,14 +44,26 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      final newList = await ref
-          .read(todoListNotifierProvider(widget.classId).notifier)
-          .createList(
-            title: _titleController.text.trim(),
-            description: _descController.text.trim(),
-            dueDate: _dueDate,
-          );
-      if (mounted) Navigator.pop(context, newList);
+      if (_isEditing) {
+        await ref
+            .read(todoListNotifierProvider(widget.classId).notifier)
+            .editList(
+              listId: widget.initialList!.id,
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+              dueDate: _dueDate,
+            );
+        if (mounted) Navigator.pop(context);
+      } else {
+        final newList = await ref
+            .read(todoListNotifierProvider(widget.classId).notifier)
+            .createList(
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+              dueDate: _dueDate,
+            );
+        if (mounted) Navigator.pop(context, newList);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -53,7 +80,7 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Todo List')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit List' : 'New Todo List')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -109,7 +136,7 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Create List'),
+                          : Text(_isEditing ? 'Save Changes' : 'Create List'),
                     ),
                   ],
                 ),

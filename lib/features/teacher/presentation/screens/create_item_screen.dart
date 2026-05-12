@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/todo_item_model.dart';
 import '../providers/todo_list_provider.dart';
 import '../widgets/due_date_picker_widget.dart';
 
 class CreateItemScreen extends ConsumerStatefulWidget {
   final String listId;
-  const CreateItemScreen({super.key, required this.listId});
+  final TodoItemModel? initialItem;
+
+  const CreateItemScreen({super.key, required this.listId, this.initialItem});
 
   @override
   ConsumerState<CreateItemScreen> createState() => _CreateItemScreenState();
@@ -18,6 +21,18 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
   DateTime? _dueDate;
   bool _isLoading = false;
 
+  bool get _isEditing => widget.initialItem != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditing) {
+      _titleController.text = widget.initialItem!.title;
+      _descController.text = widget.initialItem!.description ?? '';
+      _dueDate = widget.initialItem!.dueDate;
+    }
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -29,14 +44,26 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      await ref
-          .read(todoItemNotifierProvider(widget.listId).notifier)
-          .createItem(
-            title: _titleController.text.trim(),
-            description: _descController.text.trim(),
-            dueDate: _dueDate,
-          );
-      if (mounted) Navigator.pop(context);
+      if (_isEditing) {
+        await ref
+            .read(todoItemNotifierProvider(widget.listId).notifier)
+            .editItem(
+              itemId: widget.initialItem!.id,
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+              dueDate: _dueDate,
+            );
+        if (mounted) Navigator.pop(context);
+      } else {
+        await ref
+            .read(todoItemNotifierProvider(widget.listId).notifier)
+            .createItem(
+              title: _titleController.text.trim(),
+              description: _descController.text.trim(),
+              dueDate: _dueDate,
+            );
+        if (mounted) Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -53,7 +80,7 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Item')),
+      appBar: AppBar(title: Text(_isEditing ? 'Edit Item' : 'Add Item')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -108,7 +135,7 @@ class _CreateItemScreenState extends ConsumerState<CreateItemScreen> {
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Add Item'),
+                          : Text(_isEditing ? 'Save Changes' : 'Add Item'),
                     ),
                   ],
                 ),

@@ -49,6 +49,15 @@ class AuthNotifier extends _$AuthNotifier {
     );
   }
 
+  Future<void> updateProfile({required String fullName}) async {
+    final profile = state.valueOrNull;
+    if (profile == null) return;
+    final updated = await ref
+        .read(authRepositoryProvider)
+        .updateProfile(userId: profile.id, fullName: fullName);
+    state = AsyncData(updated);
+  }
+
   Future<void> signOut() async {
     // Clear local state synchronously first so the router redirect fires
     // immediately. Doing the Supabase call afterwards keeps the UI snappy

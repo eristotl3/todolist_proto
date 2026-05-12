@@ -81,6 +81,29 @@ class TodoRepository {
     }
   }
 
+  Future<TodoListModel> updateList({
+    required String listId,
+    required String title,
+    String? description,
+    DateTime? dueDate,
+  }) async {
+    try {
+      final data = await _client
+          .from(AppConstants.todoListsTable)
+          .update({
+            'title': title,
+            'description': (description != null && description.isNotEmpty) ? description : null,
+            'due_date': dueDate?.toIso8601String(),
+          })
+          .eq('id', listId)
+          .select()
+          .single();
+      return TodoListModel.fromJson(data);
+    } catch (e) {
+      throw AppException('Failed to update list', cause: e);
+    }
+  }
+
   // ── Todo Items ─────────────────────────────────────────────────────────────
 
   Future<List<TodoItemModel>> getItemsForList(String listId) async {
@@ -131,6 +154,29 @@ class TodoRepository {
           .eq('id', itemId);
     } catch (e) {
       throw AppException('Failed to delete item', cause: e);
+    }
+  }
+
+  Future<TodoItemModel> updateItem({
+    required String itemId,
+    required String title,
+    String? description,
+    DateTime? dueDate,
+  }) async {
+    try {
+      final data = await _client
+          .from(AppConstants.todoItemsTable)
+          .update({
+            'title': title,
+            'description': (description != null && description.isNotEmpty) ? description : null,
+            'due_date': dueDate?.toIso8601String(),
+          })
+          .eq('id', itemId)
+          .select()
+          .single();
+      return TodoItemModel.fromJson(data);
+    } catch (e) {
+      throw AppException('Failed to update item', cause: e);
     }
   }
 }

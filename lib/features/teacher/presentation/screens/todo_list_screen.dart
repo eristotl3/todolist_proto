@@ -134,6 +134,15 @@ class _ItemsTab extends ConsumerWidget {
                     const SizedBox(height: 8),
                 itemBuilder: (context, i) => _ItemTile(
                   item: items[i],
+                  onEdit: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreateItemScreen(
+                        listId: todoList.id,
+                        initialItem: items[i],
+                      ),
+                    ),
+                  ),
                   onDelete: () =>
                       _confirmDelete(context, ref, items[i], todoList.id),
                 ),
@@ -173,9 +182,10 @@ class _ItemsTab extends ConsumerWidget {
 
 class _ItemTile extends StatelessWidget {
   final TodoItemModel item;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _ItemTile({required this.item, required this.onDelete});
+  const _ItemTile({required this.item, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +196,13 @@ class _ItemTile extends StatelessWidget {
       endActionPane: ActionPane(
         motion: const DrawerMotion(),
         children: [
+          SlidableAction(
+            onPressed: (_) => onEdit(),
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: theme.colorScheme.onSecondary,
+            icon: Icons.edit_rounded,
+            label: 'Edit',
+          ),
           SlidableAction(
             onPressed: (_) => onDelete(),
             backgroundColor: theme.colorScheme.error,

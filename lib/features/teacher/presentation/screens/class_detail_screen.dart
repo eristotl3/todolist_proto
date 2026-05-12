@@ -132,10 +132,21 @@ class _TodoListsTab extends ConsumerWidget {
                     '/teacher/home/class/${classModel.id}/list/${lists[i].id}',
                     extra: lists[i],
                   ),
+                  onEdit: () => _openEditList(context, classModel.id, lists[i]),
                   onDelete: () => _confirmDelete(context, ref, lists[i]),
                 ),
               ),
             ),
+    );
+  }
+
+  Future<void> _openEditList(
+      BuildContext context, String classId, TodoListModel list) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateListScreen(classId: classId, initialList: list),
+      ),
     );
   }
 
@@ -171,11 +182,13 @@ class _TodoListsTab extends ConsumerWidget {
 class _ListCard extends StatelessWidget {
   final TodoListModel todoList;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ListCard({
     required this.todoList,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -257,6 +270,12 @@ class _ListCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: Icon(Icons.edit_outlined,
+                    color: theme.colorScheme.onSurfaceVariant, size: 20),
+                onPressed: onEdit,
+                tooltip: 'Edit',
               ),
               IconButton(
                 icon: Icon(Icons.delete_outline,

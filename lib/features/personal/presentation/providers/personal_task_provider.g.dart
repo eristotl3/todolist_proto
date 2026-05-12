@@ -7,7 +7,7 @@ part of 'personal_task_provider.dart';
 // **************************************************************************
 
 String _$personalTaskNotifierHash() =>
-    r'8568732c37473b8ab585217f6b1b8a3bdbd4d203';
+    r'76bc2bf304fa0c52abe51efc7950dda75ac4a4fe';
 
 /// See also [PersonalTaskNotifier].
 @ProviderFor(PersonalTaskNotifier)
