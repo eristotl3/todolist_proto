@@ -67,6 +67,7 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
                     router.go('/role-selection');
                   },
                   onCreateClass: () => _createClass(context),
+                  onProfile: () => context.push('/profile'),
                 ),
                 Expanded(
                   child: classesAsync.when(
@@ -89,6 +90,8 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
                                 _selectedList = null;
                                 _classTabController.index = 0;
                               }),
+                              onEdit: () =>
+                                  _editClass(context, classes[i]),
                               onDelete: () =>
                                   _deleteClass(context, classes[i]),
                             ),
@@ -193,6 +196,47 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
       }
     }
   }
+
+  Future<void> _editClass(BuildContext context, ClassModel c) async {
+    final controller = TextEditingController(text: c.name);
+    final formKey = GlobalKey<FormState>();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename Class'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Class name',
+              border: OutlineInputBorder(),
+            ),
+            textCapitalization: TextCapitalization.words,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Enter a class name' : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.pop(ctx);
+              await ref
+                  .read(classNotifierProvider.notifier)
+                  .editClass(c.id, controller.text.trim());
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ── Sidebar pieces ─────────────────────────────────────────────────────────
@@ -200,8 +244,9 @@ class _TeacherDesktopShellState extends ConsumerState<TeacherDesktopShell>
 class _SidebarHeader extends StatelessWidget {
   final Future<void> Function() onSignOut;
   final VoidCallback onCreateClass;
+  final VoidCallback onProfile;
   const _SidebarHeader(
-      {required this.onSignOut, required this.onCreateClass});
+      {required this.onSignOut, required this.onCreateClass, required this.onProfile});
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +271,11 @@ class _SidebarHeader extends StatelessWidget {
             icon: const Icon(Icons.add_circle_outline_rounded),
             tooltip: 'New class',
             onPressed: onCreateClass,
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded),
+            tooltip: 'Profile',
+            onPressed: onProfile,
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
@@ -293,11 +343,13 @@ class _SidebarClassTile extends StatelessWidget {
   final ClassModel classModel;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   const _SidebarClassTile({
     required this.classModel,
     required this.isSelected,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -308,18 +360,30 @@ class _SidebarClassTile extends StatelessWidget {
       selected: isSelected,
       selectedTileColor: theme.colorScheme.primaryContainer,
       leading: Icon(Icons.class_rounded,
-          color:
-              isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant),
       title: Text(classModel.name,
           style: TextStyle(
-              fontWeight:
-                  isSelected ? FontWeight.w600 : FontWeight.normal)),
-      subtitle: Text('${classModel.studentCount} students · ${classModel.listCount} lists',
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+      subtitle: Text(
+          '${classModel.studentCount} students · ${classModel.listCount} lists',
           style: theme.textTheme.labelSmall),
-      trailing: IconButton(
-        icon: Icon(Icons.delete_outline,
-            size: 18, color: theme.colorScheme.error),
-        onPressed: onDelete,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(Icons.edit_outlined,
+                size: 16, color: theme.colorScheme.onSurfaceVariant),
+            onPressed: onEdit,
+            tooltip: 'Rename',
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline,
+                size: 18, color: theme.colorScheme.error),
+            onPressed: onDelete,
+          ),
+        ],
       ),
       onTap: onTap,
     );
@@ -415,6 +479,15 @@ class _ClassPanel extends ConsumerWidget {
                     itemBuilder: (_, i) => _DesktopListTile(
                       list: lists[i],
                       onTap: () => onListTap(lists[i]),
+                      onEdit: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateListScreen(
+                            classId: classModel.id,
+                            initialList: lists[i],
+                          ),
+                        ),
+                      ),
                       onDelete: () async {
                         await ref
                             .read(todoListNotifierProvider(classModel.id)
@@ -436,15 +509,18 @@ class _ClassPanel extends ConsumerWidget {
 class _DesktopListTile extends StatelessWidget {
   final TodoListModel list;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   const _DesktopListTile(
-      {required this.list, required this.onTap, required this.onDelete});
+      {required this.list,
+      required this.onTap,
+      required this.onEdit,
+      required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isOverdue =
-        list.dueDate != null && list.dueDate!.isOverdue;
+    final isOverdue = list.dueDate != null && list.dueDate!.isOverdue;
     return ListTile(
       leading: Icon(Icons.checklist_rounded,
           color:
@@ -452,11 +528,21 @@ class _DesktopListTile extends StatelessWidget {
       title: Text(list.title),
       subtitle: Text(
           '${list.itemCount} items${list.dueDate != null ? ' · Due ${list.dueDate!.toDisplayDate()}' : ''}',
-          style: TextStyle(
-              color: isOverdue ? theme.colorScheme.error : null)),
-      trailing: IconButton(
-        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-        onPressed: onDelete,
+          style: TextStyle(color: isOverdue ? theme.colorScheme.error : null)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(Icons.edit_outlined,
+                size: 18, color: theme.colorScheme.onSurfaceVariant),
+            onPressed: onEdit,
+            tooltip: 'Edit',
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+            onPressed: onDelete,
+          ),
+        ],
       ),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -560,21 +646,41 @@ class _ListPanelState extends ConsumerState<_ListPanel>
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,
                     itemBuilder: (_, i) => ListTile(
-                      leading:
-                          const Icon(Icons.drag_indicator_rounded),
+                      leading: const Icon(Icons.drag_indicator_rounded),
                       title: Text(items[i].title),
                       subtitle: items[i].dueDate != null
-                          ? Text(
-                              'Due ${items[i].dueDate!.toDisplayDate()}')
+                          ? Text('Due ${items[i].dueDate!.toDisplayDate()}')
                           : null,
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        color: Theme.of(context).colorScheme.error,
-                        onPressed: () => ref
-                            .read(todoItemNotifierProvider(
-                                    widget.todoList.id)
-                                .notifier)
-                            .deleteItem(items[i].id),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit_outlined,
+                                size: 18,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant),
+                            tooltip: 'Edit',
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CreateItemScreen(
+                                  listId: widget.todoList.id,
+                                  initialItem: items[i],
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            color: Theme.of(context).colorScheme.error,
+                            onPressed: () => ref
+                                .read(todoItemNotifierProvider(
+                                        widget.todoList.id)
+                                    .notifier)
+                                .deleteItem(items[i].id),
+                          ),
+                        ],
                       ),
                     ),
                   ),
