@@ -127,10 +127,13 @@ class StudentHomeScreen extends ConsumerWidget {
                     itemBuilder: (_, i) => _ClassCard(
                       classModel: classes[i],
                       colorIndex: i,
-                      onTap: () => context.push(
-                        '/student/home/class/${classes[i].id}',
-                        extra: classes[i],
-                      ),
+                      onTap: () async {
+                        await context.push(
+                          '/student/home/class/${classes[i].id}',
+                          extra: classes[i],
+                        );
+                        ref.invalidate(assignedListsNotifierProvider);
+                      },
                     ),
                   ),
                 );

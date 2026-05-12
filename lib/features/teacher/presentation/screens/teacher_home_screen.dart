@@ -139,10 +139,13 @@ class _TeacherMobileHome extends ConsumerWidget {
                     itemBuilder: (_, i) => _ClassCard(
                       classModel: classes[i],
                       colorIndex: i,
-                      onTap: () => context.push(
-                        '/teacher/home/class/${classes[i].id}',
-                        extra: classes[i],
-                      ),
+                      onTap: () async {
+                        await context.push(
+                          '/teacher/home/class/${classes[i].id}',
+                          extra: classes[i],
+                        );
+                        ref.invalidate(classNotifierProvider);
+                      },
                       onEdit: () => _showEditDialog(context, ref, classes[i]),
                       onDelete: () =>
                           _confirmDelete(context, ref, classes[i]),

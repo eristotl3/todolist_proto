@@ -128,10 +128,13 @@ class _TodoListsTab extends ConsumerWidget {
                     const SizedBox(height: 12),
                 itemBuilder: (context, i) => _ListCard(
                   todoList: lists[i],
-                  onTap: () => context.push(
-                    '/teacher/home/class/${classModel.id}/list/${lists[i].id}',
-                    extra: lists[i],
-                  ),
+                  onTap: () async {
+                    await context.push(
+                      '/teacher/home/class/${classModel.id}/list/${lists[i].id}',
+                      extra: lists[i],
+                    );
+                    ref.invalidate(todoListNotifierProvider(classModel.id));
+                  },
                   onEdit: () => _openEditList(context, classModel.id, lists[i]),
                   onDelete: () => _confirmDelete(context, ref, lists[i]),
                 ),

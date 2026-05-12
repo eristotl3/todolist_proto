@@ -92,10 +92,13 @@ class StudentClassDetailScreen extends ConsumerWidget {
                   itemBuilder: (_, i) => _TaskListCard(
                     todoList: lists[i],
                     classColorIndex: _classColorIndex(classModel.id),
-                    onTap: () => context.push(
-                      '/student/home/class/${classModel.id}/todo/${lists[i].id}',
-                      extra: lists[i],
-                    ),
+                    onTap: () async {
+                      await context.push(
+                        '/student/home/class/${classModel.id}/todo/${lists[i].id}',
+                        extra: lists[i],
+                      );
+                      ref.invalidate(studentClassListsProvider(classModel.id));
+                    },
                   ),
                 ),
               ),
