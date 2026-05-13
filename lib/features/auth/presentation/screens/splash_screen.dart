@@ -133,8 +133,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    const penguinW = 280.0;
-    const penguinH = penguinW * 80 / 68; // ≈ 329.4
+    const penguinW = 420.0;
+    const penguinH = penguinW * 80 / 68; // ≈ 494.1
 
     return Scaffold(
       backgroundColor: _bg,

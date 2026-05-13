@@ -30,7 +30,7 @@ part 'app_router.g.dart';
 final _splashDoneProvider = StateProvider<bool>((ref) => false);
 
 // How long the splash must stay visible regardless of how fast auth resolves.
-const _minSplashDuration = Duration(milliseconds: 2300);
+const _minSplashDuration = Duration(milliseconds: 2100);
 
 @riverpod
 GoRouter appRouter(Ref ref) {
