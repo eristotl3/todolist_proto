@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
-const _bg   = Color(0xFFF5F1E7);
-const _ink  = Color(0xFF1C1815);
-const _mute = Color(0xFF7A6F63);
-const _terr = Color(0xFFCF6A3A);
+const _bg    = Color(0xFFF5F1E7);
+const _ink   = Color(0xFF1C1815);
+const _mute  = Color(0xFF7A6F63);
+const _terr  = Color(0xFFCF6A3A);
 const _cream = Color(0xFFFEF8EC);
 // _terr at 45% opacity  (0.45 × 255 ≈ 115 = 0x73)
 const _terrBlush = Color(0x73CF6A3A);
+// _ink at 70% / 40% for checklist lines
+const _inkLine70 = Color(0xB31C1815);
+const _inkLine40 = Color(0x661C1815);
 
 // ── SplashScreen ─────────────────────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
@@ -19,20 +22,17 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  // Entrance: 1800 ms, plays once
   late final AnimationController _entrance;
-  // Idle blink: 4000 ms, loops after entrance
   late final AnimationController _blink;
-  // Idle glance: 5000 ms, loops after entrance
   late final AnimationController _glance;
 
   late final Animation<double> _wordmarkOpacity;
   late final Animation<double> _wordmarkSlide;
   late final Animation<double> _taglineOpacity;
   late final Animation<double> _taglineSlide;
-  late final Animation<double> _penguinY; // fraction of penguin height
-  late final Animation<double> _blinkScale; // eye scaleY
-  late final Animation<double> _glanceX; // horizontal px offset
+  late final Animation<double> _penguinY;
+  late final Animation<double> _blinkScale;
+  late final Animation<double> _glanceX;
 
   @override
   void initState() {
@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
         Tween<double>(begin: -4.0, end: 0.0).animate(taglineCurve);
 
     // Penguin rise: delay 0.3 s, dur 1.4 s → Interval(0.167, 0.944)
-    // TweenSequence: 1.0→0.36 (easeOut, 70%), 0.36→0.44 (15%), 0.44→0.40 (easeOut, 15%)
+    // 1.0→0.36 (easeOut, 70%), 0.36→0.44 (15%), 0.44→0.40 (easeOut, 15%)
     _penguinY = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween<double>(begin: 1.0, end: 0.36)
@@ -85,19 +85,21 @@ class _SplashScreenState extends State<SplashScreen>
     ));
 
     // ── Idle blink (4000 ms loop) ──────────────────────────────────────────
+    // Two blinks per cycle: at ~37% and ~95% (mirrors CSS keyframes)
     _blink = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4000),
     );
 
-    // hold open (92%) → close (3%) → hold closed (2%) → open (3%)
     _blinkScale = TweenSequence<double>([
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 92),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 1.0, end: 0.08), weight: 3),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 35),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.08), weight: 2),
+      TweenSequenceItem(tween: ConstantTween(0.08), weight: 1),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.08, end: 1.0), weight: 2),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 52),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.08), weight: 3),
       TweenSequenceItem(tween: ConstantTween(0.08), weight: 2),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 0.08, end: 1.0), weight: 3),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.08, end: 1.0), weight: 3),
     ]).animate(_blink);
 
     // ── Idle glance (5000 ms loop) ─────────────────────────────────────────
@@ -106,17 +108,12 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 5000),
     );
 
-    // 0 → -2 px (30%) → +2 px (35%) → 0 px (35%)
     _glanceX = TweenSequence<double>([
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 0.0, end: -2.0), weight: 30),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: -2.0, end: 2.0), weight: 35),
-      TweenSequenceItem(
-          tween: Tween<double>(begin: 2.0, end: 0.0), weight: 35),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: -2.0), weight: 30),
+      TweenSequenceItem(tween: Tween<double>(begin: -2.0, end: 2.0), weight: 35),
+      TweenSequenceItem(tween: Tween<double>(begin: 2.0, end: 0.0), weight: 35),
     ]).animate(_glance);
 
-    // Start entrance; idle loops begin when entrance finishes
     _entrance.forward().then((_) {
       if (mounted) {
         _blink.repeat();
@@ -136,8 +133,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    const penguinW = 260.0;
-    const penguinH = penguinW * 80 / 68; // ≈ 305.9
+    const penguinW = 280.0;
+    const penguinH = penguinW * 80 / 68; // ≈ 329.4
 
     return Scaffold(
       backgroundColor: _bg,
@@ -152,8 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: size.height * 0.33),
-                    // Wordmark
+                    SizedBox(height: size.height * 0.30),
                     Opacity(
                       opacity: _wordmarkOpacity.value.clamp(0.0, 1.0),
                       child: Transform.translate(
@@ -161,17 +157,16 @@ class _SplashScreenState extends State<SplashScreen>
                         child: const Text(
                           'pengulist',
                           style: TextStyle(
-                            fontSize: 38,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 52,
+                            fontWeight: FontWeight.w600,
                             color: _ink,
-                            letterSpacing: -1.0,
+                            letterSpacing: -1.4,
                             height: 1.0,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    // Tagline
+                    const SizedBox(height: 12),
                     Opacity(
                       opacity: _taglineOpacity.value.clamp(0.0, 1.0),
                       child: Transform.translate(
@@ -179,9 +174,10 @@ class _SplashScreenState extends State<SplashScreen>
                         child: const Text(
                           'Tiny tasks, big wins.',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
                             color: _mute,
-                            letterSpacing: 0.1,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
@@ -214,7 +210,7 @@ class _SplashScreenState extends State<SplashScreen>
 }
 
 // ── Penguin painter ──────────────────────────────────────────────────────────
-// SVG viewBox="14 14 68 80"  →  canvas mapped via scale + translate
+// SVG viewBox="14 14 68 80" — canvas mapped via scale + translate
 class _PenguinPainter extends CustomPainter {
   _PenguinPainter({required this.blinkScale});
   final double blinkScale;
@@ -228,13 +224,13 @@ class _PenguinPainter extends CustomPainter {
     final creamP = Paint()..color = _cream;
     final terrP  = Paint()..color = _terr;
 
-    // ── Feet ─────────────────────────────────────────────────────────────────
+    // ── Feet (terracotta) ─────────────────────────────────────────────────────
     canvas.drawOval(
         Rect.fromCenter(center: const Offset(38, 84), width: 14, height: 6),
-        inkP);
+        terrP);
     canvas.drawOval(
         Rect.fromCenter(center: const Offset(58, 84), width: 14, height: 6),
-        inkP);
+        terrP);
 
     // ── Body ──────────────────────────────────────────────────────────────────
     canvas.drawPath(
@@ -262,7 +258,7 @@ class _PenguinPainter extends CustomPainter {
       creamP,
     );
 
-    // ── Hat clip (terracotta rect) ────────────────────────────────────────────
+    // ── Hat clip ──────────────────────────────────────────────────────────────
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         const Rect.fromLTWH(42, 24, 12, 6),
@@ -271,13 +267,13 @@ class _PenguinPainter extends CustomPainter {
       terrP,
     );
 
-    // ── Blush ─────────────────────────────────────────────────────────────────
+    // ── Blush (rx=2.4, ry=1.4) ───────────────────────────────────────────────
     final blushP = Paint()..color = _terrBlush;
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(39, 36), width: 9.6, height: 5.6),
+        Rect.fromCenter(center: const Offset(39, 36), width: 4.8, height: 2.8),
         blushP);
     canvas.drawOval(
-        Rect.fromCenter(center: const Offset(57, 36), width: 9.6, height: 5.6),
+        Rect.fromCenter(center: const Offset(57, 36), width: 4.8, height: 2.8),
         blushP);
 
     // ── Eyes (blink: scaleY around y=34) ─────────────────────────────────────
@@ -303,62 +299,59 @@ class _PenguinPainter extends CustomPainter {
       terrP,
     );
 
-    // ── Checklist on belly ────────────────────────────────────────────────────
-    _drawChecklist(canvas);
+    // ── Checklist ─────────────────────────────────────────────────────────────
+    _drawChecklist(canvas, terrP, creamP);
   }
 
-  void _drawChecklist(Canvas canvas) {
+  void _drawChecklist(Canvas canvas, Paint terrP, Paint creamP) {
     canvas.save();
     canvas.translate(38, 42);
 
-    const boxSize = 3.5;
-    const rowH    = 5.5;
-    const lineX   = 5.2;
-    const lineW   = 11.0;
-
-    final checkFill = Paint()..color = _terr;
-    final outlineP  = Paint()
-      ..color = _ink
+    // Checked box fill
+    final checkP = Paint()..color = _terr;
+    // Unchecked box outline
+    final outlineP = Paint()
+      ..color = _terr
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-    final lineP = Paint()
-      ..color = _mute
-      ..strokeWidth = 0.8
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 1.2;
+    // Cream checkmark stroke
     final ckP = Paint()
       ..color = _cream
-      ..strokeWidth = 0.7
+      ..strokeWidth = 1.1
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
+    // Filled line rects
+    final line70P = Paint()..color = _inkLine70;
+    final line40P = Paint()..color = _inkLine40;
 
-    for (int i = 0; i < 3; i++) {
-      final y = i * rowH;
-      final boxRect  = Rect.fromLTWH(0, y, boxSize, boxSize);
-      final boxRRect = RRect.fromRectAndRadius(boxRect, const Radius.circular(0.6));
+    // Row 1 — checked
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(0, 0, 5, 5), const Radius.circular(1.2)),
+        checkP);
+    canvas.drawPath(
+        Path()..moveTo(1, 2.5)..lineTo(2.2, 3.7)..lineTo(4, 1.8), ckP);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(8, 1, 14, 3), const Radius.circular(1.5)),
+        line70P);
 
-      if (i < 2) {
-        // Checked row: filled terracotta + cream checkmark
-        canvas.drawRRect(boxRRect, checkFill);
-        canvas.drawPath(
-          Path()
-            ..moveTo(0.5, y + boxSize * 0.52)
-            ..lineTo(boxSize * 0.38, y + boxSize * 0.85)
-            ..lineTo(boxSize - 0.4, y + 0.5),
-          ckP,
-        );
-      } else {
-        // Unchecked row: outline only
-        canvas.drawRRect(boxRRect, outlineP);
-      }
+    // Row 2 — checked
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(0, 9, 5, 5), const Radius.circular(1.2)),
+        checkP);
+    canvas.drawPath(
+        Path()..moveTo(1, 11.5)..lineTo(2.2, 12.7)..lineTo(4, 10.8), ckP);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(8, 10, 11, 3), const Radius.circular(1.5)),
+        line70P);
 
-      // Horizontal label line
-      canvas.drawLine(
-        Offset(lineX, y + boxSize / 2),
-        Offset(lineX + lineW, y + boxSize / 2),
-        lineP,
-      );
-    }
+    // Row 3 — unchecked
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(0, 18, 5, 5), const Radius.circular(1.2)),
+        outlineP);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(8, 19, 16, 3), const Radius.circular(1.5)),
+        line40P);
 
     canvas.restore();
   }

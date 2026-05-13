@@ -26,22 +26,28 @@ import 'route_names.dart';
 
 part 'app_router.g.dart';
 
+// Becomes true once the minimum splash duration has elapsed.
+final _splashDoneProvider = StateProvider<bool>((ref) => false);
+
+// How long the splash must stay visible regardless of how fast auth resolves.
+const _minSplashDuration = Duration(milliseconds: 2300);
+
 @riverpod
 GoRouter appRouter(Ref ref) {
   // Do NOT watch authNotifierProvider here — that would recreate the entire
   // GoRouter (and reset navigation to initialLocation) on every auth state
   // change. Instead, read auth state inside the redirect callback and let
-  // _AuthStateListenable tell the existing router to re-evaluate redirects.
+  // _RouterRefreshListenable tell the existing router to re-evaluate redirects.
   return GoRouter(
     initialLocation: RouteNames.splash,
-    refreshListenable: _AuthStateListenable(ref),
+    refreshListenable: _RouterRefreshListenable(ref),
     redirect: (context, state) {
       final authState = ref.read(authNotifierProvider);
+      final splashDone = ref.read(_splashDoneProvider);
 
-      // Still loading — show splash only on cold start; if the user is already
-      // on an auth screen (e.g., tapped Sign In), keep them there so the login
-      // screen can show the loading indicator and any error snackbars.
-      if (authState is AsyncLoading) {
+      // Stay on splash while auth is loading OR the minimum display time
+      // hasn't elapsed yet, so the entrance animation always plays fully.
+      if (authState is AsyncLoading || !splashDone) {
         final onAuthOrSplash = state.fullPath == RouteNames.splash ||
             state.fullPath == RouteNames.login ||
             state.fullPath == RouteNames.register ||
@@ -178,8 +184,23 @@ GoRouter appRouter(Ref ref) {
 }
 
 // Notifies GoRouter to re-evaluate redirects when auth state changes
-class _AuthStateListenable extends ChangeNotifier {
-  _AuthStateListenable(Ref ref) {
+// or when the minimum splash duration elapses.
+class _RouterRefreshListenable extends ChangeNotifier {
+  _RouterRefreshListenable(Ref ref) {
     ref.listen(authNotifierProvider, (prev, next) => notifyListeners());
+    Future.delayed(_minSplashDuration, () {
+      if (!_disposed) {
+        ref.read(_splashDoneProvider.notifier).state = true;
+        notifyListeners();
+      }
+    });
+  }
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
