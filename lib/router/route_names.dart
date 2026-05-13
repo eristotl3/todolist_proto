@@ -13,6 +13,8 @@ class RouteNames {
   static const String createItem = '/teacher/class/:classId/list/:listId/create-item';
   static const String studentProgress = '/teacher/class/:classId/student/:studentId';
 
+  static const String emailVerification = '/verify-email';
+
   static const String studentHome = '/student/home';
   static const String joinClass = '/student/join-class';
   static const String studentTodo = '/student/list/:listId';

@@ -18,7 +18,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   bool _isLoading = false;
-  bool _resetSent = false;
 
   @override
   void initState() {
@@ -61,28 +60,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _sendReset(String email) async {
-    setState(() => _isLoading = true);
-    try {
-      await AuthRepository().resetPassword(email);
-      if (mounted) {
-        setState(() => _resetSent = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset link sent — check your email')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e is AppException ? e.message : e.toString()),
-            backgroundColor: AppTheme.danger,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  Future<void> _showChangePasswordDialog(String email) async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => _ChangePasswordDialog(email: email),
+    );
   }
 
   @override
@@ -167,13 +149,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
                         OutlinedButton.icon(
-                          onPressed: (_isLoading || _resetSent)
+                          onPressed: _isLoading
                               ? null
-                              : () => _sendReset(profile.email),
+                              : () => _showChangePasswordDialog(profile.email),
                           icon: const Icon(Icons.lock_reset_rounded, size: 18),
-                          label: Text(_resetSent
-                              ? 'Reset link sent'
-                              : 'Change password'),
+                          label: const Text('Change password'),
                         ),
                       ],
                     ),
@@ -193,6 +173,179 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return '${words[0][0]}${words[1][0]}'.toUpperCase();
     }
     return name.substring(0, math.min(2, name.length)).toUpperCase();
+  }
+}
+
+class _ChangePasswordDialog extends StatefulWidget {
+  final String email;
+  const _ChangePasswordDialog({required this.email});
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentCtrl = TextEditingController();
+  final _newCtrl     = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _isLoading = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew     = true;
+  bool _obscureConfirm = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      await AuthRepository().changePassword(
+        email: widget.email,
+        currentPassword: _currentCtrl.text,
+        newPassword: _newCtrl.text,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password updated')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e is AppException ? e.message : e.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Change password'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_error != null) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.danger.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline_rounded,
+                        size: 16, color: AppTheme.danger),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_error!,
+                          style: TextStyle(
+                              fontSize: 13, color: AppTheme.danger)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            _PasswordField(
+              controller: _currentCtrl,
+              label: 'Current password',
+              obscure: _obscureCurrent,
+              onToggle: () => setState(() => _obscureCurrent = !_obscureCurrent),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Enter your current password' : null,
+            ),
+            const SizedBox(height: 10),
+            _PasswordField(
+              controller: _newCtrl,
+              label: 'New password',
+              obscure: _obscureNew,
+              onToggle: () => setState(() => _obscureNew = !_obscureNew),
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Enter a new password';
+                if (v.length < 6) return 'Minimum 6 characters';
+                if (v == _currentCtrl.text) return 'Must differ from current';
+                return null;
+              },
+            ),
+            const SizedBox(height: 10),
+            _PasswordField(
+              controller: _confirmCtrl,
+              label: 'Confirm new password',
+              obscure: _obscureConfirm,
+              onToggle: () =>
+                  setState(() => _obscureConfirm = !_obscureConfirm),
+              validator: (v) => v != _newCtrl.text ? 'Passwords do not match' : null,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isLoading ? null : _submit,
+          child: _isLoading
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppTheme.accentInk),
+                )
+              : const Text('Update'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PasswordField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscure;
+  final VoidCallback onToggle;
+  final String? Function(String?) validator;
+
+  const _PasswordField({
+    required this.controller,
+    required this.label,
+    required this.obscure,
+    required this.onToggle,
+    required this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        labelText: label,
+        isDense: true,
+        suffixIcon: IconButton(
+          icon: Icon(
+            obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+            size: 18,
+            color: AppTheme.textFaint,
+          ),
+          onPressed: onToggle,
+        ),
+      ),
+      validator: validator,
+    );
   }
 }
 

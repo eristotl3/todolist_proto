@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../domain/user_profile.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../router/route_names.dart';
 import '../../../../theme/app_theme.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -53,14 +54,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (next is AsyncError) {
         final error = next.error;
         if (error is EmailConfirmationPendingException) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error.message),
-              backgroundColor: AppTheme.success,
-              duration: const Duration(seconds: 6),
-            ),
+          context.go(
+            RouteNames.emailVerification,
+            extra: _emailController.text.trim(),
           );
-          context.go('/login');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -20,6 +20,7 @@ import '../features/student/presentation/screens/student_class_detail_screen.dar
 import '../features/student/presentation/screens/student_todo_screen.dart';
 import '../features/student/domain/enrolled_class_model.dart';
 import '../features/student/domain/student_todo_list_model.dart';
+import '../features/auth/presentation/screens/email_verification_screen.dart';
 import '../features/auth/presentation/screens/profile_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
 import 'route_names.dart';
@@ -61,7 +62,8 @@ GoRouter appRouter(Ref ref) {
       final isOnAuthRoute = state.fullPath == RouteNames.login ||
           state.fullPath == RouteNames.register ||
           state.fullPath == RouteNames.roleSelection ||
-          state.fullPath == RouteNames.useCaseSelection;
+          state.fullPath == RouteNames.useCaseSelection ||
+          state.fullPath == RouteNames.emailVerification;
 
       // Not logged in → send to use-case selection
       if (!isAuthenticated) {
@@ -99,6 +101,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RouteNames.splash,
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: RouteNames.emailVerification,
+        builder: (context, state) {
+          final email = state.extra as String? ?? '';
+          return EmailVerificationScreen(email: email);
+        },
       ),
       GoRoute(
         path: RouteNames.useCaseSelection,

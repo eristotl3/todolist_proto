@@ -78,6 +78,51 @@ class AuthRepository {
     }
   }
 
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      await _client.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: OtpType.signup,
+      );
+    } on AuthException catch (e) {
+      throw AppException(e.message);
+    } catch (e) {
+      throw AppException('Verification failed', cause: e);
+    }
+  }
+
+  Future<void> resendVerificationEmail(String email) async {
+    try {
+      await _client.auth.resend(email: email, type: OtpType.signup);
+    } on AuthException catch (e) {
+      throw AppException(e.message);
+    } catch (e) {
+      throw AppException('Failed to resend code', cause: e);
+    }
+  }
+
+  Future<void> changePassword({
+    required String email,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthException catch (e) {
+      throw AppException(e.message);
+    } catch (e) {
+      throw AppException('Failed to change password', cause: e);
+    }
+  }
+
   Future<UserProfile> updateProfile({
     required String userId,
     required String fullName,
