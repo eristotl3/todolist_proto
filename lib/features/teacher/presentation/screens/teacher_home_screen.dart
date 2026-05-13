@@ -43,11 +43,13 @@ class _TeacherMobileHome extends ConsumerWidget {
     void onSignOut() => _confirmSignOut(context, ref);
 
     Widget shell(int classCount, int activeCount, int studentCount,
-        {required Widget child}) {
+        {required Widget child, bool scrollable = true}) {
       final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
       final pct = classCount == 0 ? 0.0 : activeCount / classCount;
       return CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: scrollable
+            ? const BouncingScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -117,10 +119,11 @@ class _TeacherMobileHome extends ConsumerWidget {
     return Scaffold(
       body: classesAsync.when(
         loading: () => shell(0, 0, 0,
+            scrollable: false,
             child:
                 ShimmerListView(itemBuilder: () => const ShimmerClassCard())),
         error: (e, _) =>
-            shell(0, 0, 0, child: const _EmptyClassesPlaceholder()),
+            shell(0, 0, 0, scrollable: false, child: const _EmptyClassesPlaceholder()),
         data: (classes) {
           final totalStudents =
               classes.fold(0, (s, c) => s + c.studentCount);
@@ -153,7 +156,7 @@ class _TeacherMobileHome extends ConsumerWidget {
                   ),
                 );
           return shell(classes.length, activeCount, totalStudents,
-              child: body);
+              scrollable: classes.isNotEmpty, child: body);
         },
       ),
       floatingActionButton: FloatingActionButton.extended(

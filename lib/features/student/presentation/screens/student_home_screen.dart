@@ -34,10 +34,12 @@ class StudentHomeScreen extends ConsumerWidget {
     );
     final pct = total == 0 ? 0.0 : done / total;
 
-    Widget shell(int classCount, {required Widget child}) {
+    Widget shell(int classCount, {required Widget child, bool scrollable = true}) {
       final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
       return CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: scrollable
+            ? const BouncingScrollPhysics()
+            : const NeverScrollableScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
@@ -108,10 +110,11 @@ class StudentHomeScreen extends ConsumerWidget {
     return Scaffold(
       body: classesAsync.when(
         loading: () => shell(0,
+            scrollable: false,
             child:
                 ShimmerListView(itemBuilder: () => const ShimmerClassCard())),
         error: (e, _) =>
-            shell(0, child: const _EmptyEnrolledPlaceholder()),
+            shell(0, scrollable: false, child: const _EmptyEnrolledPlaceholder()),
         data: (classes) {
           final body = classes.isEmpty
               ? const _EmptyEnrolledPlaceholder()
@@ -137,7 +140,7 @@ class StudentHomeScreen extends ConsumerWidget {
                     ),
                   ),
                 );
-          return shell(classes.length, child: body);
+          return shell(classes.length, scrollable: classes.isNotEmpty, child: body);
         },
       ),
       floatingActionButton: FloatingActionButton.extended(

@@ -45,9 +45,11 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
     return Scaffold(
       body: tasksAsync.when(
         loading: () => _buildShell(firstName, 0, 0, signOut,
+            scrollable: false,
             child: const ShimmerListView(
                 itemBuilder: _shimmerCard)),
         error: (e, _) => _buildShell(firstName, 0, 0, signOut,
+            scrollable: false,
             child: const _EmptyTasksPlaceholder()),
         data: (tasks) {
           final done = tasks.where((t) => t.isCompleted).length;
@@ -55,6 +57,7 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
 
           if (tasks.isEmpty) {
             return _buildShell(firstName, 0, 0, signOut,
+                scrollable: false,
                 child: const _EmptyTasksPlaceholder());
           }
 
@@ -146,12 +149,15 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
     int total,
     VoidCallback onSignOut, {
     required Widget child,
+    bool scrollable = true,
   }) {
     final today = DateFormat('EEEE, MMMM d').format(DateTime.now());
     final pct = total == 0 ? 0.0 : done / total;
 
     return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: scrollable
+          ? const BouncingScrollPhysics()
+          : const NeverScrollableScrollPhysics(),
       slivers: [
         // ── Top header (warm bg) ─────────────────────────────────
         SliverToBoxAdapter(
