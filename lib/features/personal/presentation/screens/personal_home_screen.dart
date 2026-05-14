@@ -198,6 +198,11 @@ class _PersonalHomeScreenState extends ConsumerState<PersonalHomeScreen> {
                 ),
                 const SizedBox(width: 8),
                 _IconButton(
+                  icon: Icons.person_outline_rounded,
+                  onTap: () => context.push('/profile'),
+                ),
+                const SizedBox(width: 8),
+                _IconButton(
                   icon: Icons.logout_rounded,
                   onTap: onSignOut,
                 ),
