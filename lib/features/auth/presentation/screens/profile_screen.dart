@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../router/route_names.dart';
 import '../../../../theme/app_theme.dart';
 import '../../data/auth_repository.dart';
 import '../../domain/user_profile.dart';
@@ -104,6 +106,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 await ref
                     .read(authNotifierProvider.notifier)
                     .switchRole(role);
+                if (mounted) {
+                  final dest = switch (role) {
+                    UserRole.teacher  => RouteNames.teacherHome,
+                    UserRole.student  => RouteNames.studentHome,
+                    UserRole.personal => RouteNames.personalHome,
+                  };
+                  context.go(dest);
+                }
               },
             );
           }).toList(),
