@@ -18,6 +18,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   bool _isLoading = false;
+  int _avatarTaps = 0;
+  DateTime _lastTap = DateTime(0);
 
   @override
   void initState() {
@@ -60,6 +62,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  void _onAvatarTap() {
+    final now = DateTime.now();
+    if (now.difference(_lastTap) > const Duration(seconds: 2)) {
+      _avatarTaps = 0;
+    }
+    _lastTap = now;
+    _avatarTaps++;
+    if (_avatarTaps >= 5) {
+      _avatarTaps = 0;
+      _showRoleSwitcher();
+    }
+  }
+
+  Future<void> _showRoleSwitcher() async {
+    final profile = ref.read(authNotifierProvider).valueOrNull;
+    if (profile == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Switch Role'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: UserRole.values.map((role) {
+            final (label, icon) = switch (role) {
+              UserRole.teacher  => ('Admin',    Icons.school_rounded),
+              UserRole.student  => ('Student',  Icons.person_rounded),
+              UserRole.personal => ('Personal', Icons.bookmark_rounded),
+            };
+            final isCurrent = role == profile.role;
+            return ListTile(
+              leading: Icon(icon,
+                  color: isCurrent ? AppTheme.accent : AppTheme.textMute),
+              title: Text(label),
+              trailing: isCurrent
+                  ? Icon(Icons.check_rounded, color: AppTheme.accent)
+                  : null,
+              onTap: () async {
+                Navigator.of(ctx).pop();
+                if (isCurrent) return;
+                await ref
+                    .read(authNotifierProvider.notifier)
+                    .switchRole(role);
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showChangePasswordDialog(String email) async {
     await showDialog<void>(
       context: context,
@@ -84,21 +136,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: AppTheme.accentInk,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
+                  GestureDetector(
+                    onTap: _onAvatarTap,
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            color: AppTheme.accentInk,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),

@@ -123,6 +123,23 @@ class AuthRepository {
     }
   }
 
+  Future<UserProfile> updateRole({
+    required String userId,
+    required UserRole role,
+  }) async {
+    try {
+      final data = await _client
+          .from(AppConstants.profilesTable)
+          .update({'role': role.name})
+          .eq('id', userId)
+          .select()
+          .single();
+      return UserProfile.fromJson(data);
+    } catch (e) {
+      throw AppException('Failed to update role', cause: e);
+    }
+  }
+
   Future<UserProfile> updateProfile({
     required String userId,
     required String fullName,

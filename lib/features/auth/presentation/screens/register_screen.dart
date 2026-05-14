@@ -62,7 +62,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  error is AppException ? error.message : error.toString()),
+                  error is AppException ? error.toString() : error.toString(),
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                ),
               backgroundColor: AppTheme.danger,
             ),
           );

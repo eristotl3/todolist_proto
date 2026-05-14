@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../theme/app_theme.dart';
 import '../../data/auth_repository.dart';
+import '../providers/auth_provider.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   final String email;
@@ -38,7 +39,7 @@ class _EmailVerificationScreenState
       _error = null;
     });
     try {
-      await AuthRepository().verifyEmailOtp(
+      await ref.read(authNotifierProvider.notifier).verifyEmailOtp(
         email: widget.email,
         token: code,
       );
@@ -50,7 +51,6 @@ class _EmailVerificationScreenState
             duration: Duration(seconds: 3),
           ),
         );
-        // GoRouter redirect fires automatically once auth state changes to signed-in
       }
     } catch (e) {
       if (mounted) {

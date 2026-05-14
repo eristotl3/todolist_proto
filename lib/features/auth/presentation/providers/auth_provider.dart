@@ -20,7 +20,12 @@ class AuthNotifier extends _$AuthNotifier {
       }
     });
     ref.onDispose(sub.cancel);
-    return await repo.getCurrentProfile();
+    // Timeout prevents the splash screen from being stuck forever when the
+    // network hangs (e.g. flaky connection, expired token refresh stalls).
+    return await repo.getCurrentProfile().timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => null,
+    );
   }
 
   Future<void> signIn({required String email, required String password}) async {
@@ -30,6 +35,17 @@ class AuthNotifier extends _$AuthNotifier {
           .read(authRepositoryProvider)
           .signIn(email: email, password: password),
     );
+  }
+
+  Future<void> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(authRepositoryProvider).verifyEmailOtp(email: email, token: token);
+      return await ref.read(authRepositoryProvider).getCurrentProfile();
+    });
   }
 
   Future<void> signUp({
@@ -47,6 +63,15 @@ class AuthNotifier extends _$AuthNotifier {
             role: role,
           ),
     );
+  }
+
+  Future<void> switchRole(UserRole role) async {
+    final profile = state.valueOrNull;
+    if (profile == null) return;
+    final updated = await ref
+        .read(authRepositoryProvider)
+        .updateRole(userId: profile.id, role: role);
+    state = AsyncData(updated);
   }
 
   Future<void> updateProfile({required String fullName}) async {
